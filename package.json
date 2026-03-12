@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/core/index.js",
   "scripts": {
-    "build": "esbuild src/core/index.js --bundle --format=iife --global-name=NetflixRemote --alias:@=src/core/ --outfile=dist/core.js"
+    "build": "node esbuild.mjs"
   },
   "repository": {
     "type": "git",
@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/gabrielgamaalves/netflix-remote/issues"
   },
-  "homepage": "https://github.com/gabrielgamaalves/netflix-remote#readme"
+  "homepage": "https://github.com/gabrielgamaalves/netflix-remote#readme",
+  "devDependencies": {
+    "esbuild": "0.27.4"
+  }
 }

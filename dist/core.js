@@ -1,4 +1,4 @@
-var NetflixRemote = (() => {
+var NetflixRemoteCore = (() => {
   var __getOwnPropNames = Object.getOwnPropertyNames;
   var __esm = (fn, res) => function __init() {
     return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
