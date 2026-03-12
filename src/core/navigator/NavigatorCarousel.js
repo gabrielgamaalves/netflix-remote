@@ -1,4 +1,6 @@
-class NavigatorCarousel {
+import { ActionsCarousel } from "@/actions/ActionsCarousel.js"
+
+export class NavigatorCarousel {
 	constructor() {
 		this.cache = new Map
 		this.sizeCache = 3

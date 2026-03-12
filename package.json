@@ -1,0 +1,21 @@
+{
+  "name": "netflix-remote",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/core/index.js",
+  "scripts": {
+    "build": "esbuild src/core/index.js --bundle --format=iife --global-name=NetflixRemote --alias:@=src/core/ --outfile=dist/core.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gabrielgamaalves/netflix-remote.git"
+  },
+  "keywords": [],
+  "author": "Gabriel Gama",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/gabrielgamaalves/netflix-remote/issues"
+  },
+  "homepage": "https://github.com/gabrielgamaalves/netflix-remote#readme"
+}

@@ -1,5 +1,4 @@
-
-class SampleCardsManager {
+export class SampleCardsManager {
   constructor(carousel) {
     this.carousel = carousel
 
@@ -59,7 +58,7 @@ class SampleCardsManager {
   }
 }
 
-class ActionsCarousel {
+export class ActionsCarousel {
   constructor(carousel) {
     this.carousel = carousel
     this.sampleCardsManager = new SampleCardsManager(this.carousel)

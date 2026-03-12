@@ -1,0 +1,3 @@
+const injectedStyles = [
+  "netflix-remote"
+]
