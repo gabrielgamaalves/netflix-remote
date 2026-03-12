@@ -1,17 +1,17 @@
-import { NavigatorCarousel } from "./navigator/NavigatorCarousel.js"
+import { NavigatorCarousel } from "@/navigation/NavigatorCarousel.js"
 
 // @DEV-TEST
 const navigatorCarousel = new NavigatorCarousel()
 
 async function advanceNextCard() {
 	const cards = await navigatorCarousel.getCarousel().actions.advanceNextCard();
-	cards["0"].querySelector("a").dispatchEvent(new MouseEvent('mousemove', {
-		view: window,
-		bubbles: true,
-		cancelable: true,
-		clientX: 100,
-		clientY: 100
-	}))
+	// cards["0"].querySelector("a").dispatchEvent(new MouseEvent('mousemove', {
+	// 	view: window,
+	// 	bubbles: true,
+	// 	cancelable: true,
+	// 	clientX: 100,
+	// 	clientY: 100
+	// }))
 }
 
 async function advancePreviousCard() {

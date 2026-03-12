@@ -18,7 +18,7 @@ export class NavigatorCarousel {
 
 		this.index += Number(someindex)
 		this.carousel = document.getElementById(`row-${this.index}`)
-		window.carousel = this.carousel // DEV CONSOLE PAGE
+		window.carousel = this.carousel // @DEV-TEST
 
 		this.carousel.setAttribute("data-carousel-select", true)
 		window.scrollTo({
