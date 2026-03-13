@@ -1,4 +1,4 @@
-import { ActionsCarousel } from "@/actions/ActionsCarousel.js"
+import { ActionsCarousel } from "@/core/actions/ActionsCarousel.js"
 
 export class NavigatorCarousel {
 	constructor() {

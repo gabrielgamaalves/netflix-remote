@@ -1,6 +1,6 @@
-import { NavigatorCarousel } from "@/navigation/NavigatorCarousel.js"
+import { NavigatorCarousel } from "@/core/navigation/NavigatorCarousel.js"
 
-// @DEV-TEST
+// @dev-test
 const navigatorCarousel = new NavigatorCarousel()
 
 async function advanceNextCard() {
@@ -36,3 +36,4 @@ document.addEventListener('keypress', (event) => {
 	}
 });
 
+// *

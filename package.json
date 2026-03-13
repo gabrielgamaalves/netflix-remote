@@ -4,6 +4,9 @@
   "description": "",
   "main": "src/core/index.js",
   "scripts": {
+    "c-build": "esbuild src/**/*.js --bundle --format=iife --global-name=NetflixRemoteCore --outdir=dist --alias:@=src --loader:.css=text --loader:.svg=text",
+    "c-build:min": "esbuild src/core/index.js --bundle --format=iife --global-name=NetflixRemoteCore --outfile=dist/core.min.js --alias:@=src --loader:.css=text --loader:.svg=text --minify",
+    "c-build:s": "esbuild src/core/index.js --bundle --format=iife --global-name=NetflixRemoteCore --outfile=dist/core.js --alias:@=src --loader:.css=text --loader:.svg=text --watch --serve=3000 --servedir=dist",
     "build": "node esbuild.mjs"
   },
   "repository": {
@@ -13,7 +16,7 @@
   "keywords": [],
   "author": "Gabriel Gama",
   "license": "MIT",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/gabrielgamaalves/netflix-remote/issues"
   },

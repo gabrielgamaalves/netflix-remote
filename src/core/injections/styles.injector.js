@@ -1,3 +1,0 @@
-const injectedStyles = [
-  "netflix-remote"
-]
