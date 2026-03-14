@@ -7,7 +7,10 @@
     "c-build": "esbuild src/**/*.js --bundle --format=iife --global-name=NetflixRemoteCore --outdir=dist --alias:@=src --loader:.css=text --loader:.svg=text",
     "c-build:min": "esbuild src/core/index.js --bundle --format=iife --global-name=NetflixRemoteCore --outfile=dist/core.min.js --alias:@=src --loader:.css=text --loader:.svg=text --minify",
     "c-build:s": "esbuild src/core/index.js --bundle --format=iife --global-name=NetflixRemoteCore --outfile=dist/core.js --alias:@=src --loader:.css=text --loader:.svg=text --watch --serve=3000 --servedir=dist",
-    "build": "node esbuild.mjs"
+    
+    "build": "node build.mjs",
+    "build:compact": "node build.mjs --compact --compact-filename=netflixremote",
+    "watch": "node build.mjs --ambient=context --watch --serve=3000 --servedir=dist"
   },
   "repository": {
     "type": "git",
@@ -22,6 +25,7 @@
   },
   "homepage": "https://github.com/gabrielgamaalves/netflix-remote#readme",
   "devDependencies": {
+    "adm-zip": "^0.5.16",
     "esbuild": "0.27.4"
   }
 }
