@@ -1,11 +1,15 @@
 export class ReactElement {
-  element: Element
+  element?: Element
 
-  constructor(element: Element) {
+  constructor(element: Element | null) {
+    if (!element) return
+
     this.element = element;
   }
 
   getProps(): Record<string, string> | undefined{
+    if (!this.element) return
+    
     const keyFiber: string | undefined = Object.keys(this.element)
       .find(key =>
         key.startsWith('__reactFiber$')
