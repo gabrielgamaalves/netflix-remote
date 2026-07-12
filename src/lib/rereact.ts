@@ -1,10 +1,15 @@
+interface ReactProps {
+  children: ReactElement | ReactElement[] | undefined;
+  [key: string]: any
+}
+
 interface IReactElement {
   $$typeof?: symbol;
   type: any;
   key?: string | null;
   ref: any;
-  props: any;
-  _owner: any;
+  props: ReactProps;
+  _owner: HTMLReact;
   _store?: any;
 
   [key: string]: any;
@@ -15,17 +20,19 @@ export class ReactElement {
   public type: any;
   public key?: string | null;
   public ref: any;
-  public props: any;
-  public _owner: any;
+  public props!: ReactProps;
+  public _owner!: HTMLReact;
   public _store?: any;
 
   [key: string]: any;
 
   constructor(reactElement: IReactElement) {
-    (
-      Object.assign(this, reactElement),
-      this.props.children = ReactElement.childrenReactElements(this.props.children)
-    )
+    Object.assign(this, reactElement)
+
+    if (this.props.children) {
+      this.props.children =
+        ReactElement.childrenReactElements(this.props.children)
+    }
   }
 
   get isReactComponent(): boolean {
@@ -41,8 +48,8 @@ export class ReactElement {
 
     const isReactElement = (element: any) => !!element.$$typeof && (element.$$typeof.description === "react.element")
 
-    if ( (typeof children === "object") && isReactElement(children)) { 
-      return new ReactElement(children) 
+    if ((typeof children === "object") && isReactElement(children)) {
+      return new ReactElement(children)
     }
 
     if (Array.isArray(children)) {
