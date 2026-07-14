@@ -11,7 +11,6 @@ interface IReactElement {
   props: ReactProps;
   _owner: HTMLReact;
   _store?: any;
-
   [key: string]: any;
 }
 
@@ -23,20 +22,18 @@ export class ReactElement {
   public props!: ReactProps;
   public _owner!: HTMLReact;
   public _store?: any;
-
   [key: string]: any;
 
   constructor(reactElement: IReactElement) {
     Object.assign(this, reactElement)
 
-    if (this.props.children) {
-      this.props.children =
-        ReactElement.childrenReactElements(this.props.children)
+    if (this.props?.children) {
+      this.props.children = ReactElement.childrenReactElements(this.props.children) || this.props.children
     }
   }
 
   get isReactComponent(): boolean {
-    return !!this.tag && (this.tag >= 2 && this.tag <= 6)
+    return false
   }
 
   get isReactElement(): boolean {
@@ -46,25 +43,28 @@ export class ReactElement {
   static childrenReactElements(children?: any) {
     if (!children) return
 
-    const isReactElement = (element: any) => !!element.$$typeof && (element.$$typeof.description === "react.element")
+    const isReactElement = (element: any) => !!element?.$$typeof && (element.$$typeof.description === "react.element")
 
     if ((typeof children === "object") && isReactElement(children)) {
       return new ReactElement(children)
     }
 
     if (Array.isArray(children)) {
-      return (
-        children.map(function (child) {
-          if (!isReactElement(child)) return
-          return new ReactElement(child)
-        }).filter(f => f) as ReactElement[]
-      )
+      const mapped = children.map(function (child) {
+        if (!isReactElement(child)) return
+        return new ReactElement(child)
+      }).filter(f => f)
+
+      return mapped.length > 0 ? mapped : undefined
     }
+
+    return children
   }
 }
 
 export class HTMLReact {
   private element?: Element | null
+  private fiberCache?: any
 
   public tag?: number;
   public key?: string | null;
@@ -74,46 +74,57 @@ export class HTMLReact {
   public child?: HTMLReact | null;
   public sibling?: HTMLReact | null;
 
-  public memoizedProps?: any;
+  public memoizedProps?: ReactProps;
   public memoizedState?: any;
   public updateQueue?: any;
 
   [key: string]: any;
 
   constructor(element?: Element) {
-    if (!element) return
+    if (!element) {
+      this.element = null
+      return
+    }
+    
     this.element = element;
+    const fiber = this.reactFiber()
+    
+    if (fiber) {
+      Object.assign(this, fiber)
+      this.fiberCache = fiber
+    }
 
-    (
-      Object.assign(this, this.reactFiber()),
-      this.props.children = ReactElement.childrenReactElements(this.props.children)
-    )
+    if (this.memoizedProps?.children) {
+      const processed = ReactElement.childrenReactElements(this.memoizedProps.children)
+      if (processed) {
+        this.memoizedProps.children = processed
+      }
+    }
   }
 
   private reactFiber() {
-    if (!this.element) return
+    if (!this.element) return null
 
     const keyFiber: string | undefined = Object.keys(this.element)
       .find(key =>
         key.startsWith('__reactFiber$')
       );
 
-    if (!keyFiber) return;
+    if (!keyFiber) return null;
 
-    const fiber = (this.element as any)[keyFiber];
-    return fiber
+    return (this.element as any)[keyFiber];
   }
 
   get isReactComponent(): boolean {
     return !!this.tag && (this.tag >= 2 && this.tag <= 6)
   }
 
-  get props(): any {
-    return this?.memoizedProps || null;
+  get props(): ReactProps | null {
+    return this.memoizedProps || null;
   }
 
   get state(): any {
-    return this?.memoizedState || null;
+    return this.memoizedState || null;
   }
 
   get componentType(): string | null {
