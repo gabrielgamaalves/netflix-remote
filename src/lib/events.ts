@@ -50,3 +50,5 @@ export class EventEmitter {
     return this.on(event, onceListener);
   }
 }
+
+export default EventEmitter
