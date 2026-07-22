@@ -1,7 +1,7 @@
 export interface ReactElement<P = any, T = string | Function> {
   type: T;
   props: P & {
-    children?: ReactNode;
+    children?: ReactNode | ReactElement[];
   };
   key: string | null;
   ref: any;
@@ -82,7 +82,7 @@ interface Source {
 }
 
 type FiberProps = {
-  children?: ReactNode;
+  children?: ReactNode | ReactNode[];
   [key: string]: any;
 };
 
