@@ -75,7 +75,7 @@ export class Carousel {
 
     const parent = selectedElement.parentNode;
     if (!parent) return -1;
-    
+
     return Array.from(parent.children).indexOf(selectedElement);
   }
 
@@ -106,6 +106,9 @@ export class CarouselItem {
 
   itemIndex?: number | undefined
   virtualSlot?: number | undefined
+
+  // viewportIndex?: number | undefined
+  // viewportPosition?: "leftPeek" | "leftEdge" | "middle" | "rightEdge" | "rightPeek"
 
   itemKey?: string;
   unifiedEntityId?: number;
@@ -200,6 +203,50 @@ export class CarouselItem {
     return {
       wrappedItem
     }
+  }
+
+  private get visibleItemsCount() {
+    if (!this.element) return undefined
+
+    const visibleItemsCount: number = Number(getComputedStyle(this.element).getPropertyValue('--slot-width').slice(-2, -1));
+    return visibleItemsCount
+  }
+
+  get viewportIndex() {
+    if (!this.element || !this.virtualSlot) return undefined
+
+    const parent = this.element.parentNode
+    if (!parent) return undefined
+
+    const index = this.virtualSlot;
+    const visibleItemsCount = this.visibleItemsCount as number
+
+    const viewportIndex = index - visibleItemsCount
+
+    return (viewportIndex >= 0 && viewportIndex <= (visibleItemsCount + 1)) ? viewportIndex : undefined
+  }
+
+  get viewportPosition() {
+    const viewportIndex = this.viewportIndex
+    if (viewportIndex === undefined) return undefined
+
+    const visibleItemsCount = this.visibleItemsCount as number
+
+    switch (viewportIndex) {
+      case 0:
+        return "leftPeek";
+      case 1:
+        return "leftEdge";
+
+      case visibleItemsCount:
+        return "rightEdge"
+      case visibleItemsCount + 1:
+        return "rightPeek"
+      
+      default:
+        return "middle"
+    }
+    
   }
 }
 
