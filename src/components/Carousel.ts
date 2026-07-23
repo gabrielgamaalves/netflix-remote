@@ -67,7 +67,28 @@ export class Carousel {
     return Number(this._react?.provider?.memoizedProps?.value.pageCount)
   }
 
+  get selectedPage() {
+    this.syncIfMounted()
+
+    const selectedElement = this.element?.querySelector('[data-uia="carousel-page-indicator"] [data-indicator-selected="true"]')
+    if (!selectedElement) return -1;
+
+    const parent = selectedElement.parentNode;
+    if (!parent) return -1;
+    
+    return Array.from(parent.children).indexOf(selectedElement);
+  }
+
+  get visibleItemsCount() {
+    this.syncIfMounted()
+
+    const scroller = this.element?.querySelector('[data-uia="carousel-scroller"] div div') as Element
+    return Number(getComputedStyle(scroller).getPropertyValue('--slot-width').slice(-2, -1))
+  }
+
   getCarouselItems() {
+    this.syncIfMounted()
+
     const scroller = this.element?.querySelector('[data-uia="carousel-scroller"] div div')
     const items = Array.from(scroller?.querySelectorAll("[data-virtual-slot]") || []);
 
