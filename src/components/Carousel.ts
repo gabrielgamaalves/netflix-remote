@@ -1,5 +1,4 @@
 import { FiberElement, type ReactElement, type ReactNode, type Fiber } from "@lib/react-fiber.js";
-import toUndefinedIfNaN from "@utils/toUndefinedIfNaN.js";
 
 export class Carousel {
   readonly rowIndex: string | number

@@ -1,3 +1,6 @@
+import type { Fiber, ReactElement } from "@lib/react-fiber.js"
+import toUndefinedIfNaN from "@utils/toUndefinedIfNaN.js"
+
 export class CarouselItem {
   element?: Element
 
