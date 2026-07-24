@@ -58,16 +58,24 @@ export class Carousel {
     }
   }
 
-  get totalItems() {
+  get totalItems(): number {
     this.syncIfMounted()
     return Number(this._react?.slider?.props.totalCount)
   }
-  get totalPages() {
+  get totalPages(): number {
     this.syncIfMounted()
     return Number(this._react?.provider?.memoizedProps?.value.pageCount)
   }
 
-  get selectedPage() {
+  get totalItemsLoaded(): number {
+    const slider = ((this._react?.provider?.return?.return?.memoizedProps?.children as ReactNode[])[1] as ReactElement).props?.children[1]
+    return slider?.props?.children?.length || 0
+  }
+  get hasLoadedAllItems() {
+    return this.totalItemsLoaded === this.totalItems
+  }
+
+  get selectedPageIndex(): number {
     this.syncIfMounted()
 
     const selectedElement = this.element?.querySelector('[data-uia="carousel-page-indicator"] [data-indicator-selected="true"]')
@@ -79,7 +87,7 @@ export class Carousel {
     return Array.from(parent.children).indexOf(selectedElement);
   }
 
-  get visibleItemsCount() {
+  get visibleItemsCount(): number {
     this.syncIfMounted()
 
     const scroller = this.element?.querySelector('[data-uia="carousel-scroller"] div div') as Element
@@ -93,6 +101,14 @@ export class Carousel {
     const items = Array.from(scroller?.querySelectorAll("[data-virtual-slot]") || []);
 
     return items
+  }
+
+  previousPage() {
+    return this._react?.provider?.memoizedProps?.value.previousPage()
+  }
+
+  nextPage() {
+    return this._react?.provider?.memoizedProps?.value.nextPage()  
   }
 }
 
@@ -225,7 +241,6 @@ export class CarouselItem {
 
     return (viewportIndex >= 0 && viewportIndex <= (visibleItemsCount + 1)) ? viewportIndex : undefined
   }
-
   get viewportPosition() {
     const viewportIndex = this.viewportIndex
     if (viewportIndex === undefined) return undefined
@@ -242,11 +257,11 @@ export class CarouselItem {
         return "rightEdge"
       case visibleItemsCount + 1:
         return "rightPeek"
-      
+
       default:
         return "middle"
     }
-    
+
   }
 }
 
