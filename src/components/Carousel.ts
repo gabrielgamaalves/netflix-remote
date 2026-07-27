@@ -1,4 +1,5 @@
 import { FiberElement, type ReactElement, type ReactNode, type Fiber } from "@lib/react-fiber.js";
+import waitForTransitionEnd from "@utils/waitForTransitionEnd.js";
 
 export class Carousel {
   readonly rowIndex: string | number
@@ -16,6 +17,7 @@ export class Carousel {
     provider: Fiber | null | undefined,
     slider: ReactElement | null | undefined
   }
+  _scroller?: Element | null | undefined
 
   constructor(rowIndex: string | number) {
     this.rowIndex = rowIndex
@@ -35,6 +37,8 @@ export class Carousel {
     this.id = element.id
 
     this.title = element.querySelector("p")?.innerText
+
+    this._scroller = this.element?.querySelector('[data-uia="carousel-scroller"] div div')
 
     this.buildReact()
   }
@@ -89,25 +93,35 @@ export class Carousel {
   get visibleItemsCount(): number {
     this.syncIfMounted()
 
-    const scroller = this.element?.querySelector('[data-uia="carousel-scroller"] div div') as Element
-    return Number(getComputedStyle(scroller).getPropertyValue('--slot-width').slice(-2, -1))
+    if (!this._scroller) return 0
+    return Number(getComputedStyle(this._scroller).getPropertyValue('--slot-width').slice(-2, -1))
   }
 
   getCarouselItems() {
     this.syncIfMounted()
 
-    const scroller = this.element?.querySelector('[data-uia="carousel-scroller"] div div')
-    const items = Array.from(scroller?.querySelectorAll("[data-virtual-slot]") || []);
-
+    const items = Array.from(this._scroller?.querySelectorAll("[data-virtual-slot]") || []);
     return items
   }
 
   previousPage() {
     return this._react?.provider?.memoizedProps?.value.previousPage()
   }
-
   nextPage() {
-    return this._react?.provider?.memoizedProps?.value.nextPage()  
+    return this._react?.provider?.memoizedProps?.value.nextPage()
+  }
+
+  async previousPageAsync() {
+    if (!this._scroller) return undefined
+
+    this.previousPage()
+    return await waitForTransitionEnd(this._scroller)
+  }
+  async nextPageAsync() {
+    if (!this._scroller) return undefined
+
+    this.nextPage()
+    return await waitForTransitionEnd(this._scroller)
   }
 }
 
