@@ -43,6 +43,8 @@ export class CarouselItem {
 
   typeCard?: "standard" | "ranked" | undefined
 
+  _isValid: boolean = false
+
   constructor(element: HTMLElement) {
     this.build(element)
   }
@@ -51,7 +53,7 @@ export class CarouselItem {
   // syncIfMounted() { if (!this.hasLinkedElement) this.build() }
 
   build(element: HTMLElement) {
-    if (!element || !(!!(element.dataset?.virtualSlot))) return false
+    if (!element || !(!!(element.dataset?.virtualSlot))) { this._isValid = false; return false } else { this._isValid = true }
     this.element = element
 
     this.buildReact()
@@ -87,6 +89,8 @@ export class CarouselItem {
     this.maturityLevel = this._react?.wrappedItem?.props?.maturityLevel
 
     this.typeCard = this.trackingClass.size === 0 ? undefined : (this.trackingClass.has("standard-card") ? "standard" : "ranked");
+
+    return true
   }
 
   private buildReact() {
@@ -130,6 +134,7 @@ export class CarouselItem {
 
     return (viewportIndex >= 0 && viewportIndex <= (visibleItemsCount + 1)) ? viewportIndex : undefined
   }
+
   get viewportPosition() {
     const viewportIndex = this.viewportIndex
     if (viewportIndex === undefined) return undefined
@@ -150,6 +155,17 @@ export class CarouselItem {
       default:
         return "middle"
     }
-
   }
 }
+
+// window.scrollTo({
+//   top: ,
+//   behavior: "smooth"
+// })
+
+
+// var ca = new __Carousel(8)
+// window.scrollTo({
+//   top: (ca.element.offsetTop - (ca.element.getBoundingClientRect().height)),
+// 	behavior: "smooth"
+// })

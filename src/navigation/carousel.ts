@@ -5,23 +5,26 @@ type latestAction = "initialized" | "nextItem" | "previousItem" | "nextPage+next
 
 export class NavigationCarousel {
   carousel: Carousel
-  id: string
+  id?: string
 
-  latestAction: latestAction
+  latestAction?: latestAction
 
-  selectedItemIndex: number
-  selectedViewportIndex: number
+  selectedItemIndex?: number
+  selectedViewportIndex?: number
 
   selectedItem?: CarouselItem | undefined
 
+  _isValid: boolean = false
+
   constructor(rowIndex: string | number) {
-    this.carousel = new Carousel(rowIndex)
+    this.carousel = new Carousel(rowIndex) /* principio da hierarqui */
+    this.build()
+  }
 
-    if (!this.carousel.element) {
-      throw new Error("O Carousel não foi encontrado")
-    }
+  build() {
+    if (!this.carousel._isValid) { this._isValid = false; return false } else { this._isValid = true }
 
-    this.id = this.carousel.element.id
+    this.id = this.carousel.element!.id
 
     this.selectedItemIndex = 0
     this.selectedViewportIndex = 1 /* leftEdge */
@@ -29,40 +32,51 @@ export class NavigationCarousel {
     this.latestAction = "initialized"
 
     this.selectItem(this.selectedViewportIndex)
+    
+    return true
   }
 
   get selectedPageIndex() {
+    if (!this._isValid) return undefined
     return this.carousel.selectedPageIndex
   }
 
   async nextItem() {
-    return await this.selectItem(this.selectedViewportIndex + 1)
+    if (!this._isValid) return undefined
+    return await this.selectItem(this.selectedViewportIndex! + 1)
   }
   async previousItem() {
-    return await this.selectItem(this.selectedViewportIndex - 1)
+    if (!this._isValid) return undefined
+    return await this.selectItem(this.selectedViewportIndex! - 1)
   }
 
   getCarouselItems() {
+    if (!this._isValid) return undefined
+
     const items = this.carousel.getCarouselItems()
     return items.map((item) => new CarouselItem(item as HTMLElement))
   }
 
   getItemByIndex(itemIndex: number) {
-    return this.getCarouselItems().find(item => item.itemIndex === itemIndex)
+    if (!this._isValid) return undefined
+    return (this.getCarouselItems() as CarouselItem[]).find(item => item.itemIndex === itemIndex)
   }
   getItemByViewportIndex(viewportIndex: number) {
-    return this.getCarouselItems().find(item => item.viewportIndex === viewportIndex)
+    if (!this._isValid) return undefined
+    return (this.getCarouselItems() as CarouselItem[]).find(item => item.viewportIndex === viewportIndex)
   }
 
   async selectItem(viewportIndex: number): Promise<CarouselItem | undefined> {
+    if (!this._isValid) return undefined
+
     let latestPage = this.selectedPageIndex
 
     let nextItem = this.getItemByViewportIndex(viewportIndex)
     let nextViewportIndex = viewportIndex
 
-    let action: latestAction = (viewportIndex === this.selectedViewportIndex) ? "initialized" : ((viewportIndex > this.selectedViewportIndex) ? "nextItem" : "previousItem")
+    let action: latestAction = (viewportIndex === this.selectedViewportIndex) ? "initialized" : ((viewportIndex > (this.selectedViewportIndex!)) ? "nextItem" : "previousItem")
 
-    this.deselectItem(this.selectedItemIndex) /* or viewportIndex */
+    this.deselectItem(this.selectedItemIndex!) /* or viewportIndex */
 
     if (nextItem?.viewportPosition === "rightPeek") {
       await this.carousel.nextPageAsync()
@@ -70,7 +84,7 @@ export class NavigationCarousel {
 
       action = "nextPage+nextItem"
 
-      nextItem = this.getItemByIndex(nextItem.itemIndex as number) /* Ensures that regardless of how many items are scrolled through, it will always select the next one. */
+      nextItem = this.getItemByIndex(nextItem.itemIndex!) /* Ensures that regardless of how many items are scrolled through, it will always select the next one. */
       nextViewportIndex = nextItem?.viewportIndex || 1
     }
 
@@ -82,7 +96,7 @@ export class NavigationCarousel {
 
       action = "previousPage+previousItem"
 
-      nextItem = this.getItemByIndex(nextItem.itemIndex as number) /* Ensures that regardless of how many items are scrolled through, it will always select the next one. */
+      nextItem = this.getItemByIndex(nextItem.itemIndex!) /* Ensures that regardless of how many items are scrolled through, it will always select the next one. */
       nextViewportIndex = nextItem?.viewportIndex || this.carousel.visibleItemsCount
     }
 

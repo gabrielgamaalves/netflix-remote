@@ -19,10 +19,12 @@ export class Carousel {
   }
   _scroller?: Element | null | undefined
 
+  _isValid: boolean = false
+
   constructor(rowIndex: string | number) {
     this.rowIndex = rowIndex
     // this.options = options
-
+    
     this.build()
   }
 
@@ -31,7 +33,7 @@ export class Carousel {
 
   build() {
     const element = document.body.querySelector(`[data-uia="carousel-row-section-${this.rowIndex}"]`) // (issues) -> mudar isso para melhor aproveitamento e organização do row
-    if (!element) return false
+    if (!element) { this._isValid = false; return false } else { this._isValid = true }
 
     this.element = element
     this.id = element.id
@@ -41,6 +43,8 @@ export class Carousel {
     this._scroller = this.element?.querySelector('[data-uia="carousel-scroller"] div div')
 
     this.buildReact()
+
+    return true
   }
 
   private buildReact() {
