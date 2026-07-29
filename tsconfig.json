@@ -7,6 +7,8 @@
 
     "paths": {
       "@components/*": ["./src/components/*"],
+      "@navigation/*": ["./src/navigation/*"],
+      "@navigator": ["./src/navigator/*"],
       "@events/*": ["./src/events/*"],
       "@utils/*": ["./src/utils/*"],
       "@lib/*": ["./src/lib/*"],
