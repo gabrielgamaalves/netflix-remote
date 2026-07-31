@@ -2,19 +2,44 @@ import { NavigationCarousel } from "./carousel.js";
 
 type CacheOptions = { maxCacheSize: number }
 
+type CarouselSelectionHooks = {
+  onCarouselSelected?: (carousel: NavigationCarousel) => void
+  onCarouselDeselected?: (carousel: NavigationCarousel) => void
+}
+
+const defaultHooks: Required<CarouselSelectionHooks> = {
+  onCarouselSelected: (navCarousel) => {
+    const element = navCarousel.carousel.element!
+    element.setAttribute("data-carousel-selected", "true")
+
+    window.scrollTo({
+      top: (element.offsetTop - element.getBoundingClientRect().height),
+      behavior: "smooth"
+    })
+  },
+  onCarouselDeselected: (navCarousel) => {
+    navCarousel.carousel.element?.removeAttribute("data-carousel-selected")
+  }
+}
+
 export class NavigationCarouselCollection {
   options: CacheOptions | undefined
+  hooks: Required<CarouselSelectionHooks>
   cache: Map<number, NavigationCarousel>
 
   selectedCarouselIndex: number = 0
   selectedCarousel?: NavigationCarousel
 
-  constructor(startCarousel: number, options?: CacheOptions) {
-    this.options = options || { maxCacheSize: 3 }
-    this.options.maxCacheSize = (this.options.maxCacheSize < 3) ? 3 : this.options.maxCacheSize
+  constructor(startCarousel: number, options?: CacheOptions & CarouselSelectionHooks) {
+    this.options = { maxCacheSize: options?.maxCacheSize ?? 3 }
+    this.options.maxCacheSize = Math.max(this.options.maxCacheSize, 3)
+
+    this.hooks = {
+      onCarouselSelected: options?.onCarouselSelected ?? defaultHooks.onCarouselSelected,
+      onCarouselDeselected: options?.onCarouselDeselected ?? defaultHooks.onCarouselDeselected,
+    }
 
     this.cache = new Map()
-
     this.selectCarousel(startCarousel)
   }
 
@@ -38,29 +63,23 @@ export class NavigationCarouselCollection {
 
     if (!targetCarousel._isMounted) return this.selectedCarousel
 
-    this.deselectCarousel(this.selectedCarouselIndex)
+    this.deselectCarouselByIndex(this.selectedCarouselIndex)
 
     this.selectedCarouselIndex = carouselIndex
     this.selectedCarousel = targetCarousel
 
     this.cacheCarousel(carouselIndex, targetCarousel)
 
-    this.selectedCarousel.carousel.element?.setAttribute("data-carousel-selected", "true")
-
-    const carouselElement = this.selectedCarousel.carousel.element!
-    window.scrollTo({
-      top: (carouselElement.offsetTop - (carouselElement.getBoundingClientRect().height)),
-      behavior: "smooth"
-    })
+    this.hooks.onCarouselSelected(this.selectedCarousel)
 
     return targetCarousel
   }
 
-  deselectCarousel(carouselIndex: number) {
+  deselectCarouselByIndex(carouselIndex: number) {
     if (!this.cache.has(carouselIndex)) return false
 
-    const carousel = this.cache.get(carouselIndex)
-    carousel?.carousel.element?.removeAttribute("data-carousel-selected")
+    const cachedCarousel = this.cache.get(carouselIndex)
+    if (cachedCarousel) this.hooks.onCarouselDeselected(cachedCarousel)
 
     return true
   }

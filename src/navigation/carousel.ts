@@ -3,8 +3,24 @@ import { CarouselItem } from "@components/CarouselItem.js";
 
 type LatestAction = "initialized" | "nextItem" | "previousItem" | "nextPageAndItem" | "previousPageAndItem"
 
+type ItemSelectionHooks = {
+  onItemSelected?: (item: CarouselItem) => void
+  onItemDeselected?: (item: CarouselItem) => void
+}
+
+const defaultItemHooks: Required<ItemSelectionHooks> = {
+  onItemSelected: (item) => {
+    item.element?.setAttribute("data-card-selected", "true")
+  },
+  onItemDeselected: (item) => {
+    item.element?.removeAttribute("data-card-selected")
+  }
+}
+
 export class NavigationCarousel {
   carousel: Carousel
+  hooks: Required<ItemSelectionHooks>
+
   id?: string
 
   latestAction?: LatestAction
@@ -16,8 +32,13 @@ export class NavigationCarousel {
 
   _isMounted: boolean = false
 
-  constructor(rowIndex: string | number) {
+  constructor(rowIndex: string | number, options?: ItemSelectionHooks) {
     this.carousel = new Carousel(rowIndex) /* principio da hierarqui */
+    this.hooks = {
+      onItemSelected: options?.onItemSelected ?? defaultItemHooks.onItemSelected,
+      onItemDeselected: options?.onItemDeselected ?? defaultItemHooks.onItemDeselected,
+    }
+
     this.mount()
   }
 
@@ -73,9 +94,9 @@ export class NavigationCarousel {
 
   getCarouselItems() {
     if (!this._isMounted) return undefined
-    
+
     const items = this.carousel.getCarouselItems() || []
-    return items 
+    return items
   }
 
   getItemByIndex(itemIndex: number) {
@@ -138,13 +159,13 @@ export class NavigationCarousel {
     this.selectedItem = targetItem
 
     this.selectedItemIndex = this.selectedItem?.itemIndex as number
-    this.selectedItem?.element?.setAttribute("data-card-selected", "true")
+    if (this.selectedItem) this.hooks.onItemSelected(this.selectedItem)
 
     return this.selectedItem
   }
 
   deselectItemByIndex(itemIndex: number) {
     const item = this.getItemByIndex(itemIndex)
-    item?.element?.removeAttribute("data-card-selected")
+    if (item) this.hooks.onItemDeselected(item)
   }
 }
