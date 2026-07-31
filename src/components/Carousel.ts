@@ -18,7 +18,11 @@ export class Carousel {
     provider: Fiber | null | undefined,
     slider: ReactElement | null | undefined
   }
-  _scrollerContainer?: Element | null | undefined
+
+  _domRefs?: {
+    scroller: HTMLElement | null | undefined
+    scrollTrack: HTMLElement | null
+  }
 
   _isMounted: boolean = false
 
@@ -41,11 +45,17 @@ export class Carousel {
 
     this.title = element.querySelector("p")?.innerText
 
-    this._scrollerContainer = this.element?.querySelector('[data-uia="carousel-scroller"] div div')
-
+    this.resolveDomReferences()
     this.resolveFiberReferences()
 
     return true
+  }
+
+  private resolveDomReferences() {
+    const scroller = this.element?.querySelector('[data-uia="carousel-scroller"]') as HTMLElement | null ?? null
+    const scrollTrack = scroller?.querySelector('div div') as HTMLElement | null ?? null
+
+    this._domRefs = { scroller, scrollTrack }
   }
 
   private resolveFiberReferences() {
@@ -105,10 +115,10 @@ export class Carousel {
   }
 
   get visibleItemsCount(): number | undefined {
-    if (!this._isMounted || !this._scrollerContainer) return undefined
+    if (!this._isMounted || !this._domRefs?.scrollTrack) return undefined
 
     this.refreshIfNeeded()
-    return Number(getComputedStyle(this._scrollerContainer).getPropertyValue('--slot-width').slice(-2, -1))
+    return Number(getComputedStyle(this._domRefs?.scrollTrack).getPropertyValue('--slot-width').slice(-2, -1))
   }
 
   getCarouselItems() {
@@ -116,7 +126,7 @@ export class Carousel {
 
     this.refreshIfNeeded()
 
-    const items = Array.from(this._scrollerContainer?.querySelectorAll("[data-virtual-slot]") || []);
+    const items = Array.from(this._domRefs?.scrollTrack?.querySelectorAll("[data-virtual-slot]") || []);
     return items.map((item) => new CarouselItem(item as HTMLElement))
   }
 
@@ -137,16 +147,16 @@ export class Carousel {
 
 
   async previousPageAsync() {
-    if (!this._isMounted || !this._scrollerContainer) return undefined
+    if (!this._isMounted || !this._domRefs?.scrollTrack) return undefined
 
     this.previousPage()
-    return await waitForTransitionEnd(this._scrollerContainer)
+    return await waitForTransitionEnd(this._domRefs?.scrollTrack)
   }
 
   async nextPageAsync() {
-    if (!this._isMounted || !this._scrollerContainer) return undefined
+    if (!this._isMounted || !this._domRefs?.scrollTrack) return undefined
 
     this.nextPage()
-    return await waitForTransitionEnd(this._scrollerContainer)
+    return await waitForTransitionEnd(this._domRefs?.scrollTrack)
   }
 }
