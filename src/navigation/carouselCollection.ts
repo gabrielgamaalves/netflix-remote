@@ -1,13 +1,13 @@
-import { NavigationCarousel } from "./carousel.js";
+import { NavigationCarousel, type ItemSelectionHooks } from "./carousel.js";
 
-type CacheOptions = { maxCacheSize: number }
+export type CacheOptions = { maxCacheSize: number }
 
-type CarouselSelectionHooks = {
+export type CarouselSelectionHooks = {
   onCarouselSelected?: (carousel: NavigationCarousel) => void
   onCarouselDeselected?: (carousel: NavigationCarousel) => void
 }
 
-const defaultHooks: Required<CarouselSelectionHooks> = {
+export const defaultHooks: Required<CarouselSelectionHooks> = {
   onCarouselSelected: (navCarousel) => {
     const element = navCarousel.carousel.element!
     element.setAttribute("data-carousel-selected", "true")
@@ -24,19 +24,28 @@ const defaultHooks: Required<CarouselSelectionHooks> = {
 
 export class NavigationCarouselCollection {
   options: CacheOptions | undefined
+
   hooks: Required<CarouselSelectionHooks>
+  itemHooks?: ItemSelectionHooks
+
   cache: Map<number, NavigationCarousel>
 
   selectedCarouselIndex: number = 0
   selectedCarousel?: NavigationCarousel
 
-  constructor(startCarousel: number, options?: CacheOptions & CarouselSelectionHooks) {
-    this.options = { maxCacheSize: options?.maxCacheSize ?? 3 }
-    this.options.maxCacheSize = Math.max(this.options.maxCacheSize, 3)
+  constructor(startCarousel: number, options?: CacheOptions & CarouselSelectionHooks & ItemSelectionHooks) {
+    this.options = {
+      maxCacheSize: Math.max(options?.maxCacheSize ?? 3, 3)
+    }
 
     this.hooks = {
       onCarouselSelected: options?.onCarouselSelected ?? defaultHooks.onCarouselSelected,
       onCarouselDeselected: options?.onCarouselDeselected ?? defaultHooks.onCarouselDeselected,
+    }
+
+    this.itemHooks = {
+      onItemSelected: options?.onItemSelected,
+      onItemDeselected: options?.onItemDeselected,
     }
 
     this.cache = new Map()
@@ -58,7 +67,10 @@ export class NavigationCarouselCollection {
     ) {
       targetCarousel = this.cache.get(carouselIndex)!
     } else {
-      targetCarousel = new NavigationCarousel(carouselIndex)
+      targetCarousel = new NavigationCarousel(carouselIndex, {
+        onItemSelected: this.itemHooks?.onItemSelected,
+        onItemDeselected: this.itemHooks?.onItemDeselected
+      })
     }
 
     if (!targetCarousel._isMounted) return this.selectedCarousel

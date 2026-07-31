@@ -1,14 +1,14 @@
 import { Carousel } from "@components/Carousel.js";
 import { CarouselItem } from "@components/CarouselItem.js";
 
-type LatestAction = "initialized" | "nextItem" | "previousItem" | "nextPageAndItem" | "previousPageAndItem"
+export type LatestAction = "initialized" | "nextItem" | "previousItem" | "nextPageAndItem" | "previousPageAndItem"
 
-type ItemSelectionHooks = {
-  onItemSelected?: (item: CarouselItem) => void
-  onItemDeselected?: (item: CarouselItem) => void
+export type ItemSelectionHooks = {
+  onItemSelected?: ((item: CarouselItem) => void) | undefined
+  onItemDeselected?: ((item: CarouselItem) => void) | undefined
 }
 
-const defaultItemHooks: Required<ItemSelectionHooks> = {
+export const defaultItemHooks: Required<ItemSelectionHooks> = {
   onItemSelected: (item) => {
     item.element?.setAttribute("data-card-selected", "true")
   },
@@ -160,13 +160,13 @@ export class NavigationCarousel {
     this.selectedItem = targetItem
 
     this.selectedItemIndex = this.selectedItem?.itemIndex as number
-    if (this.selectedItem) this.hooks.onItemSelected(this.selectedItem)
+    if (this.selectedItem) this.hooks.onItemSelected!(this.selectedItem)
 
     return this.selectedItem
   }
 
   deselectItemByIndex(itemIndex: number) {
     const item = this.getItemByIndex(itemIndex)
-    if (item) this.hooks.onItemDeselected(item)
+    if (item) this.hooks.onItemDeselected!(item)
   }
 }
