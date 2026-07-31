@@ -108,6 +108,14 @@ export class NavigationCarousel {
     return (this.getCarouselItems() as CarouselItem[]).find(item => item.viewportIndex === viewportIndex)
   }
 
+  private waitForFrame<T = void>(callback?: () => T | Promise<T>): Promise<T> {
+    return new Promise(resolve => {
+      requestAnimationFrame(() => requestAnimationFrame(async () => {
+        resolve(callback ? await callback() : (undefined as T))
+      }))
+    })
+  }
+
   async selectItem(viewportIndex: number): Promise<CarouselItem | undefined> {
     if (!this._isMounted) return undefined
 
@@ -120,37 +128,30 @@ export class NavigationCarousel {
 
     this.deselectItemByIndex(this.selectedItemIndex!) /* or viewportIndex */
 
-    if (targetItem?.viewportPosition === "rightPeek") {
-      await this.carousel.nextPageAsync()
-      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
-
-      action = "nextPageAndItem"
-
-      targetItem = this.getItemByIndex(targetItem.itemIndex!) /* Ensures that regardless of how many items are scrolled through, it will always select the next one. */
-      targetViewportIndex = targetItem?.viewportIndex || 1
+    if (targetItem?.viewportPosition === "leftPeek" && this.currentPageIndex === 0 && !this.carousel.allItemsLoaded) {
+      return this.selectItem(targetViewportIndex + 1) /* Due to slowness when loading items, it hinders the item selection process. */
     }
 
-    if (targetItem?.viewportPosition === "leftPeek") {
-      if (this.currentPageIndex === 0 && !this.carousel.allItemsLoaded) return this.selectItem(targetViewportIndex + 1) /* Due to slowness when loading items, it hinders the item selection process. */
+    const peekDirection = targetItem?.viewportPosition
+    if (peekDirection === "rightPeek" || peekDirection === "leftPeek") {
+      const isForward = peekDirection === "rightPeek"
 
-      await this.carousel.previousPageAsync()
-      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      await (isForward ? this.carousel.nextPageAsync() : this.carousel.previousPageAsync())
+      await this.waitForFrame()
 
-      action = "previousPageAndItem"
+      action = isForward ? "nextPageAndItem" : "previousPageAndItem"
 
-      targetItem = this.getItemByIndex(targetItem.itemIndex!) /* Ensures that regardless of how many items are scrolled through, it will always select the next one. */
-      targetViewportIndex = targetItem?.viewportIndex || this.carousel.visibleItemsCount!
+      targetItem = this.getItemByIndex(targetItem!.itemIndex!) /* Ensures that regardless of how many items are scrolled through, it will always select the next one. */
+      targetViewportIndex = targetItem?.viewportIndex || (isForward ? 1 : this.carousel.visibleItemsCount!)
     }
 
     // Prevents the carousel from interfering with item selection if it returns to the beginning and gets reloaded.
     if (latestPage === (this.carousel.totalPages! - 1) && this.currentPageIndex === 0) {
-      return (
-        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(async () => {
-          const selectItem = await this.selectItem(targetViewportIndex)
-          this.latestAction = "nextPageAndItem"
-          resolve(selectItem)
-        })))
-      )
+      return this.waitForFrame(async () => {
+        const selectedItem = await this.selectItem(targetViewportIndex)
+        this.latestAction = "nextPageAndItem"
+        return selectedItem
+      })
     }
 
     this.latestAction = action
