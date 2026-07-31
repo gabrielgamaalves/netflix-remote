@@ -1,63 +1,64 @@
 import { FiberElement, type ReactElement, type ReactNode, type Fiber } from "@lib/react-fiber.js";
 import waitForTransitionEnd from "@utils/waitForTransitionEnd.js";
+import { CarouselItem } from "./CarouselItem.js";
 
 export class Carousel {
   readonly rowIndex: string | number
   // readonly options?: {
-  //   force_link_react?: boolean
+  //   force_link_fiberRefs?: boolean
   // }
 
-  element?: Element
+  element?: HTMLElement
   id?: string
 
   title: string | undefined
 
   _fiber?: Fiber | undefined
-  _react?: {
+  _fiberRefs?: {
     provider: Fiber | null | undefined,
     slider: ReactElement | null | undefined
   }
-  _scroller?: Element | null | undefined
+  _scrollerContainer?: Element | null | undefined
 
-  _isValid: boolean = false
+  _isMounted: boolean = false
 
   constructor(rowIndex: string | number) {
     this.rowIndex = rowIndex
     // this.options = options
 
-    this.build()
+    this.mount()
   }
 
   get hasLinkedElement() { return this?.element?.isConnected && !!((this._fiber?.ref as any)?.current) }
-  syncIfMounted() { if (!this.hasLinkedElement) this.build() }
+  refreshIfNeeded() { if (!this.hasLinkedElement) this.mount() }
 
-  build() {
+  mount() {
     const element = document.body.querySelector(`[data-uia="carousel-row-section-${this.rowIndex}"]`) // (issues) -> mudar isso para melhor aproveitamento e organização do row
-    if (!element) { this._isValid = false; return false } else { this._isValid = true }
+    if (!element) { this._isMounted = false; return false } else { this._isMounted = true }
 
-    this.element = element
+    this.element = element as HTMLElement
     this.id = element.id
 
     this.title = element.querySelector("p")?.innerText
 
-    this._scroller = this.element?.querySelector('[data-uia="carousel-scroller"] div div')
+    this._scrollerContainer = this.element?.querySelector('[data-uia="carousel-scroller"] div div')
 
-    this.buildReact()
+    this.resolveFiberReferences()
 
     return true
   }
 
-  private buildReact() {
-    this._fiber = this.getFiberFromElement()
-    this._react = this.reactFromElement()
+  private resolveFiberReferences() {
+    this._fiber = this.createFiberInstance()
+    this._fiberRefs = this.extractFiberRefs()
   }
 
-  private getFiberFromElement() {
+  private createFiberInstance() {
     if (!this.element) return
     return new FiberElement(this.element as HTMLElement)
   }
 
-  private reactFromElement() {
+  private extractFiberRefs() {
     if (!this._fiber) return { provider: undefined, slider: undefined }
     return {
       provider: this?._fiber?.return?.return,
@@ -66,33 +67,33 @@ export class Carousel {
   }
 
   get totalItems(): number | undefined {
-    if (!this._isValid) return undefined
+    if (!this._isMounted) return undefined
 
-    this.syncIfMounted()
-    return Number(this._react?.slider?.props.totalCount)
+    this.refreshIfNeeded()
+    return Number(this._fiberRefs?.slider?.props.totalCount)
   }
   get totalPages(): number | undefined {
-    if (!this._isValid) return undefined
+    if (!this._isMounted) return undefined
 
-    this.syncIfMounted()
-    return Number(this._react?.provider?.memoizedProps?.value.pageCount)
+    this.refreshIfNeeded()
+    return Number(this._fiberRefs?.provider?.memoizedProps?.value.pageCount)
   }
 
   get totalItemsLoaded(): number | undefined {
-    if (!this._isValid) return undefined
+    if (!this._isMounted) return undefined
 
-    const slider = ((this._react?.provider?.return?.return?.memoizedProps?.children as ReactNode[])[1] as ReactElement).props?.children[1]
+    const slider = ((this._fiberRefs?.provider?.return?.return?.memoizedProps?.children as ReactNode[])[1] as ReactElement).props?.children[1]
     return slider?.props?.children?.length || 0
   }
-  get hasLoadedAllItems() {
-    if (!this._isValid) return undefined
+  get allItemsLoaded() {
+    if (!this._isMounted) return undefined
     return this.totalItemsLoaded === this.totalItems
   }
 
-  get selectedPageIndex(): number | undefined {
-    if (!this._isValid) return undefined
+  get currentPageIndex(): number | undefined {
+    if (!this._isMounted) return undefined
 
-    this.syncIfMounted()
+    this.refreshIfNeeded()
 
     const selectedElement = this.element?.querySelector('[data-uia="carousel-page-indicator"] [data-indicator-selected="true"]')
     if (!selectedElement) return -1;
@@ -104,96 +105,48 @@ export class Carousel {
   }
 
   get visibleItemsCount(): number | undefined {
-    if (!this._isValid || !this._scroller) return undefined
+    if (!this._isMounted || !this._scrollerContainer) return undefined
 
-    this.syncIfMounted()
-    return Number(getComputedStyle(this._scroller).getPropertyValue('--slot-width').slice(-2, -1))
+    this.refreshIfNeeded()
+    return Number(getComputedStyle(this._scrollerContainer).getPropertyValue('--slot-width').slice(-2, -1))
   }
 
   getCarouselItems() {
-    if (!this._isValid) return undefined
+    if (!this._isMounted) return undefined
 
-    this.syncIfMounted()
+    this.refreshIfNeeded()
 
-    const items = Array.from(this._scroller?.querySelectorAll("[data-virtual-slot]") || []);
-    return items
+    const items = Array.from(this._scrollerContainer?.querySelectorAll("[data-virtual-slot]") || []);
+    return items.map((item) => new CarouselItem(item as HTMLElement))
   }
+
 
   previousPage() {
-    if (!this._isValid) return undefined
+    if (!this._isMounted) return undefined
 
-    this.syncIfMounted()
-    return this._react?.provider?.memoizedProps?.value.previousPage()
+    this.refreshIfNeeded()
+    return this._fiberRefs?.provider?.memoizedProps?.value.previousPage()
   }
+
   nextPage() {
-    if (!this._isValid) return undefined
+    if (!this._isMounted) return undefined
 
-    this.syncIfMounted()
-    return this._react?.provider?.memoizedProps?.value.nextPage()
+    this.refreshIfNeeded()
+    return this._fiberRefs?.provider?.memoizedProps?.value.nextPage()
   }
+
 
   async previousPageAsync() {
-    if (!this._isValid || !this._scroller) return undefined
+    if (!this._isMounted || !this._scrollerContainer) return undefined
 
     this.previousPage()
-    return await waitForTransitionEnd(this._scroller)
+    return await waitForTransitionEnd(this._scrollerContainer)
   }
+
   async nextPageAsync() {
-    if (!this._isValid || !this._scroller) return undefined
+    if (!this._isMounted || !this._scrollerContainer) return undefined
 
     this.nextPage()
-    return await waitForTransitionEnd(this._scroller)
+    return await waitForTransitionEnd(this._scrollerContainer)
   }
 }
-
-// export class Carousel {
-//   readonly rowIndex: string | number
-
-//   _fiber?: FiberElement | undefined
-//   _provider?: Fiber | null | undefined
-//   _slider?: ReactElement | null | undefined
-
-//   constructor(rowIndex: string | number) {
-//     this.rowIndex = rowIndex
-//     this.build()
-//   }
-
-//   get totalItems() { return this?._slider?.props.totalCount }
-//   get totalPages() { return this?._provider?.memoizedProps?.value.pageCount }
-
-//   getCarouselItems() {
-//     return this?._slider?.props.children
-//   }
-
-//   getItemsId() {
-//     return (((this?._provider?.return?.return?.return?.memoizedProps?.children as ReactNode[])[0] as any)[0] as ReactElement).props?.unifiedEntityIds
-//   }
-
-//   previousPage() {
-//     return this?._provider?.memoizedProps?.value.previousPage()
-//   }
-
-//   nextPage() {
-//     return this?._provider?.memoizedProps?.value.nextPage()
-//   }
-
-//   reload() {
-//     return this.build()
-//   }
-
-//   get isLinkedComponent() { return !!((this._fiber?.ref as any)?.current) }
-
-//   private build() {
-//     const element = document.body.querySelector(
-//       `[data-uia="carousel-row-section-${this.rowIndex}"]` // (issues) -> mudar isso para melhor aproveitamento e organização do row
-//     )
-//     if (!element) return false
-
-//     this._fiber = new FiberElement(element as HTMLElement);
-
-//     this._provider = this._fiber.return?.return
-//     this._slider = ((this?._provider?.return?.return?.memoizedProps?.children as ReactNode[])[1] as ReactElement).props?.children[1]
-
-//     return true
-//   }
-// }

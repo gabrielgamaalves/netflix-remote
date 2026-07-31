@@ -5,7 +5,7 @@ export class CarouselItem {
   element?: Element
 
   _fiber?: Fiber | undefined
-  _react?: {
+  _fiberRefs?: {
     wrappedItem: ReactElement
   }
 
@@ -41,69 +41,69 @@ export class CarouselItem {
   trackingClass?: Set<string>;
   maturityLevel?: string;
 
-  typeCard?: "standard" | "ranked" | undefined
+  cardType?: "standard" | "ranked" | undefined
 
-  _isValid: boolean = false
+  _isMounted: boolean = false
 
   constructor(element: HTMLElement) {
-    this.build(element)
+    this.mount(element)
   }
 
   get hasLinkedElement() { return this?.element?.isConnected && !!((this._fiber?.ref as any)?.current) }
-  // syncIfMounted() { if (!this.hasLinkedElement) this.build() }
+  // syncIfMounted() { if (!this.hasLinkedElement) this.mount() }
 
-  build(element: HTMLElement) {
-    if (!element || !(!!(element.dataset?.virtualSlot))) { this._isValid = false; return false } else { this._isValid = true }
+  mount(element: HTMLElement) {
+    if (!element || !(!!(element.dataset?.virtualSlot))) { this._isMounted = false; return false } else { this._isMounted = true }
     this.element = element
 
-    this.buildReact()
-    // if (!this._react?.wrappedItem) return false
+    this.resolveFiberReferences()
+    // if (!this._fiberRefs?.wrappedItem) return false
 
-    this.itemIndex = this._react?.wrappedItem?.props?.itemIndex || toUndefinedIfNaN(Number(this._fiber?.return?.key))
+    this.itemIndex = this._fiberRefs?.wrappedItem?.props?.itemIndex || toUndefinedIfNaN(Number(this._fiber?.return?.key))
     this.virtualSlot = toUndefinedIfNaN(Number(element.dataset.virtualSlot))
 
-    this.itemKey = this._react?.wrappedItem?.props?.itemKey
-    this.unifiedEntityId = this._react?.wrappedItem?.props?.unifiedEntityId
-    this.videoId = this._react?.wrappedItem?.props?.videoId
+    this.itemKey = this._fiberRefs?.wrappedItem?.props?.itemKey
+    this.unifiedEntityId = this._fiberRefs?.wrappedItem?.props?.unifiedEntityId
+    this.videoId = this._fiberRefs?.wrappedItem?.props?.videoId
 
     this.playableInfo = {
-      videoId: this._react?.wrappedItem?.props?.playableInfo?.videoId,
-      bookmarkPosition: this._react?.wrappedItem?.props?.playableInfo?.bookmarkPosition,
-      runtime: this._react?.wrappedItem?.props?.playableInfo?.runtime,
+      videoId: this._fiberRefs?.wrappedItem?.props?.playableInfo?.videoId,
+      bookmarkPosition: this._fiberRefs?.wrappedItem?.props?.playableInfo?.bookmarkPosition,
+      runtime: this._fiberRefs?.wrappedItem?.props?.playableInfo?.runtime,
     }
 
-    this.rank = this._react?.wrappedItem?.props?.rank
-    this.uiRanking = this._react?.wrappedItem?.props?.uiRanking
-    this.rankingOpacity = this._react?.wrappedItem?.props?.rankingOpacity
-    this.title = this._react?.wrappedItem?.props?.title
+    this.rank = this._fiberRefs?.wrappedItem?.props?.rank
+    this.uiRanking = this._fiberRefs?.wrappedItem?.props?.uiRanking
+    this.rankingOpacity = this._fiberRefs?.wrappedItem?.props?.rankingOpacity
+    this.title = this._fiberRefs?.wrappedItem?.props?.title
 
     this.image = {
-      key: this._react?.wrappedItem?.props?.image?.key,
-      url: this._react?.wrappedItem?.props?.image?.url,
-      width: this._react?.wrappedItem?.props?.image?.width,
-      height: this._react?.wrappedItem?.props?.image?.height,
+      key: this._fiberRefs?.wrappedItem?.props?.image?.key,
+      url: this._fiberRefs?.wrappedItem?.props?.image?.url,
+      width: this._fiberRefs?.wrappedItem?.props?.image?.width,
+      height: this._fiberRefs?.wrappedItem?.props?.image?.height,
     }
 
-    // this.imageCongruenceContext = this._react?.wrappedItem.props?.imageCongruenceContext
-    this.trackingClass = new Set(this._react?.wrappedItem?.props?.trackingClass.split(" "))
-    this.maturityLevel = this._react?.wrappedItem?.props?.maturityLevel
+    // this.imageCongruenceContext = this._fiberRefs?.wrappedItem.props?.imageCongruenceContext
+    this.trackingClass = new Set(this._fiberRefs?.wrappedItem?.props?.trackingClass.split(" "))
+    this.maturityLevel = this._fiberRefs?.wrappedItem?.props?.maturityLevel
 
-    this.typeCard = this.trackingClass.size === 0 ? undefined : (this.trackingClass.has("standard-card") ? "standard" : "ranked");
+    this.cardType = this.trackingClass.size === 0 ? undefined : (this.trackingClass.has("standard-card") ? "standard" : "ranked");
 
     return true
   }
 
-  private buildReact() {
-    this._fiber = this.getFiberFromElement()
-    this._react = this.reactFromElement()
+  private resolveFiberReferences() {
+    this._fiber = this.createFiberInstance()
+    this._fiberRefs = this.extractFiberRefs()
   }
 
-  private getFiberFromElement() {
-    if (!this._isValid) return
+  private createFiberInstance() {
+    if (!this._isMounted) return
     return new FiberElement(this.element as HTMLElement)
   }
 
-  private reactFromElement() {
+  private extractFiberRefs() {
     if (!this._fiber) return { wrappedItem: undefined }
 
     const { wrappedItem, itemIndex } = (this._fiber.memoizedProps?.children as ReactElement)?.props || {}
@@ -115,14 +115,14 @@ export class CarouselItem {
   }
 
   private get visibleItemsCount() {
-    if (!this._isValid) return undefined
+    if (!this._isMounted) return undefined
 
     const visibleItemsCount: number = Number(getComputedStyle(this.element!).getPropertyValue('--slot-width').slice(-2, -1));
     return visibleItemsCount
   }
 
   get viewportIndex() {
-    if (!this._isValid || !this.virtualSlot) return undefined
+    if (!this._isMounted || !this.virtualSlot) return undefined
 
     const parent = this.element!.parentNode
     if (!parent) return undefined
@@ -136,7 +136,7 @@ export class CarouselItem {
   }
 
   get viewportPosition() {
-    if (!this._isValid) return undefined
+    if (!this._isMounted) return undefined
     
     const viewportIndex = this.viewportIndex
     if (viewportIndex === undefined) return undefined
@@ -159,15 +159,3 @@ export class CarouselItem {
     }
   }
 }
-
-// window.scrollTo({
-//   top: ,
-//   behavior: "smooth"
-// })
-
-
-// var ca = new __Carousel(8)
-// window.scrollTo({
-//   top: (ca.element.offsetTop - (ca.element.getBoundingClientRect().height)),
-// 	behavior: "smooth"
-// })

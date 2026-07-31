@@ -1,113 +1,132 @@
 import { Carousel } from "@components/Carousel.js";
 import { CarouselItem } from "@components/CarouselItem.js";
 
-type latestAction = "initialized" | "nextItem" | "previousItem" | "nextPage+nextItem" | "previousPage+previousItem"
+type LatestAction = "initialized" | "nextItem" | "previousItem" | "nextPageAndItem" | "previousPageAndItem"
 
 export class NavigationCarousel {
   carousel: Carousel
   id?: string
 
-  latestAction?: latestAction
+  latestAction?: LatestAction
 
   selectedItemIndex?: number
   selectedViewportIndex?: number
 
   selectedItem?: CarouselItem | undefined
 
-  _isValid: boolean = false
+  _isMounted: boolean = false
 
   constructor(rowIndex: string | number) {
     this.carousel = new Carousel(rowIndex) /* principio da hierarqui */
-    this.build()
+    this.mount()
   }
 
-  get hasLinkedComponent() { return (this.carousel.hasLinkedElement) }
+  get hasLinkedElement() { return (this.carousel.hasLinkedElement) }
 
-  build() {
-    if (!this.carousel._isValid) { this._isValid = false; return false } else { this._isValid = true }
-
-    this.id = this.carousel.element!.id
-
-    this.selectedItemIndex = 0
-    this.selectedViewportIndex = 1 /* leftEdge */
+  mount() {
+    if (!this.carousel._isMounted) { this._isMounted = false; return false } else { this._isMounted = true }
 
     this.latestAction = "initialized"
 
+    this.id = this.carousel.element!.id
+    this.selectedItemIndex = 0
+
+    const viewportBySelectedCard = this.findViewportBySelectedCard()
+    this.selectedViewportIndex = (viewportBySelectedCard > -1) ? viewportBySelectedCard : (1 /* leftEdge */)
+
     this.selectItem(this.selectedViewportIndex)
-    
+
     return true
   }
 
-  get selectedPageIndex() {
-    if (!this._isValid) return undefined
-    return this.carousel.selectedPageIndex
+  private findViewportBySelectedCard(): number {
+    const selectedCardElement = this.carousel.element!.querySelector("[data-card-selected]") /* vai ter */
+
+    if (!selectedCardElement) return -1
+
+    const item = new CarouselItem(selectedCardElement as HTMLElement)
+
+    const itemPage = (item.itemIndex! / this.carousel.visibleItemsCount!)
+    const currentPage = this.carousel.currentPageIndex!
+
+    if (
+      !item._isMounted
+      || !(itemPage >= currentPage) && (itemPage <= currentPage + 1)
+    ) return -1
+
+    return item.viewportIndex || -1
+  }
+
+  get currentPageIndex() {
+    if (!this._isMounted) return undefined
+    return this.carousel.currentPageIndex
   }
 
   async nextItem() {
-    if (!this._isValid) return undefined
+    if (!this._isMounted) return undefined
     return await this.selectItem(this.selectedViewportIndex! + 1)
   }
   async previousItem() {
-    if (!this._isValid) return undefined
+    if (!this._isMounted) return undefined
     return await this.selectItem(this.selectedViewportIndex! - 1)
   }
 
   getCarouselItems() {
-    if (!this._isValid) return undefined
-
+    if (!this._isMounted) return undefined
+    
     const items = this.carousel.getCarouselItems() || []
-    return items.map((item) => new CarouselItem(item as HTMLElement))
+    return items 
   }
 
   getItemByIndex(itemIndex: number) {
-    if (!this._isValid) return undefined
+    if (!this._isMounted) return undefined
     return (this.getCarouselItems() as CarouselItem[]).find(item => item.itemIndex === itemIndex)
   }
   getItemByViewportIndex(viewportIndex: number) {
-    if (!this._isValid) return undefined
+    if (!this._isMounted) return undefined
     return (this.getCarouselItems() as CarouselItem[]).find(item => item.viewportIndex === viewportIndex)
   }
 
   async selectItem(viewportIndex: number): Promise<CarouselItem | undefined> {
-    if (!this._isValid) return undefined
+    if (!this._isMounted) return undefined
 
-    let latestPage = this.selectedPageIndex
+    let latestPage = this.currentPageIndex
 
-    let nextItem = this.getItemByViewportIndex(viewportIndex)
-    let nextViewportIndex = viewportIndex
+    let targetItem = this.getItemByViewportIndex(viewportIndex)
+    let targetViewportIndex = viewportIndex
 
-    let action: latestAction = (viewportIndex === this.selectedViewportIndex) ? "initialized" : ((viewportIndex > (this.selectedViewportIndex!)) ? "nextItem" : "previousItem")
+    let action: LatestAction = (viewportIndex === this.selectedViewportIndex) ? "initialized" : ((viewportIndex > (this.selectedViewportIndex!)) ? "nextItem" : "previousItem")
 
-    this.deselectItem(this.selectedItemIndex!) /* or viewportIndex */
+    this.deselectItemByIndex(this.selectedItemIndex!) /* or viewportIndex */
 
-    if (nextItem?.viewportPosition === "rightPeek") {
+    if (targetItem?.viewportPosition === "rightPeek") {
       await this.carousel.nextPageAsync()
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
 
-      action = "nextPage+nextItem"
+      action = "nextPageAndItem"
 
-      nextItem = this.getItemByIndex(nextItem.itemIndex!) /* Ensures that regardless of how many items are scrolled through, it will always select the next one. */
-      nextViewportIndex = nextItem?.viewportIndex || 1
+      targetItem = this.getItemByIndex(targetItem.itemIndex!) /* Ensures that regardless of how many items are scrolled through, it will always select the next one. */
+      targetViewportIndex = targetItem?.viewportIndex || 1
     }
 
-    if (nextItem?.viewportPosition === "leftPeek") {
-      if (this.selectedPageIndex === 0 && !this.carousel.hasLoadedAllItems) return this.selectItem(nextViewportIndex + 1) /* Due to slowness when loading items, it hinders the item selection process. */
+    if (targetItem?.viewportPosition === "leftPeek") {
+      if (this.currentPageIndex === 0 && !this.carousel.allItemsLoaded) return this.selectItem(targetViewportIndex + 1) /* Due to slowness when loading items, it hinders the item selection process. */
 
       await this.carousel.previousPageAsync()
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
 
-      action = "previousPage+previousItem"
+      action = "previousPageAndItem"
 
-      nextItem = this.getItemByIndex(nextItem.itemIndex!) /* Ensures that regardless of how many items are scrolled through, it will always select the next one. */
-      nextViewportIndex = nextItem?.viewportIndex || this.carousel.visibleItemsCount!
+      targetItem = this.getItemByIndex(targetItem.itemIndex!) /* Ensures that regardless of how many items are scrolled through, it will always select the next one. */
+      targetViewportIndex = targetItem?.viewportIndex || this.carousel.visibleItemsCount!
     }
 
     // Prevents the carousel from interfering with item selection if it returns to the beginning and gets reloaded.
-    if (latestPage === (this.carousel.totalPages! - 1) && this.selectedPageIndex === 0) {
+    if (latestPage === (this.carousel.totalPages! - 1) && this.currentPageIndex === 0) {
       return (
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(async () => {
-          const selectItem = await this.selectItem(nextViewportIndex)
-          this.latestAction = "nextPage+nextItem"
+          const selectItem = await this.selectItem(targetViewportIndex)
+          this.latestAction = "nextPageAndItem"
           resolve(selectItem)
         })))
       )
@@ -115,8 +134,8 @@ export class NavigationCarousel {
 
     this.latestAction = action
 
-    this.selectedViewportIndex = nextViewportIndex
-    this.selectedItem = nextItem
+    this.selectedViewportIndex = targetViewportIndex
+    this.selectedItem = targetItem
 
     this.selectedItemIndex = this.selectedItem?.itemIndex as number
     this.selectedItem?.element?.setAttribute("data-card-selected", "true")
@@ -124,7 +143,7 @@ export class NavigationCarousel {
     return this.selectedItem
   }
 
-  deselectItem(itemIndex: number) {
+  deselectItemByIndex(itemIndex: number) {
     const item = this.getItemByIndex(itemIndex)
     item?.element?.removeAttribute("data-card-selected")
   }

@@ -1,17 +1,17 @@
 import { NavigationCarousel } from "./carousel.js";
 
-type options = { cacheSize: number }
+type CacheOptions = { maxCacheSize: number }
 
 export class NavigationCarouselCollection {
-  options: options | undefined
+  options: CacheOptions | undefined
   cache: Map<number, NavigationCarousel>
 
   selectedCarouselIndex: number = 0
   selectedCarousel?: NavigationCarousel
 
-  constructor(startCarousel: number, options?: options) {
-    this.options = options || { cacheSize: 3 }
-    this.options.cacheSize = (this.options.cacheSize < 3) ? 3 : this.options.cacheSize
+  constructor(startCarousel: number, options?: CacheOptions) {
+    this.options = options || { maxCacheSize: 3 }
+    this.options.maxCacheSize = (this.options.maxCacheSize < 3) ? 3 : this.options.maxCacheSize
 
     this.cache = new Map()
 
@@ -26,24 +26,24 @@ export class NavigationCarouselCollection {
   }
 
   selectCarousel(carouselIndex: number) {
-    let selectedCarousel: NavigationCarousel;
+    let targetCarousel: NavigationCarousel;
 
     if (
-      this.cache.has(carouselIndex) && this.cache.get(carouselIndex)?._isValid
+      this.cache.has(carouselIndex) && this.cache.get(carouselIndex)?._isMounted
     ) {
-      selectedCarousel = this.cache.get(carouselIndex)!
+      targetCarousel = this.cache.get(carouselIndex)!
     } else {
-      selectedCarousel = new NavigationCarousel(carouselIndex)
+      targetCarousel = new NavigationCarousel(carouselIndex)
     }
 
-    if (!selectedCarousel._isValid) return this.selectedCarousel
+    if (!targetCarousel._isMounted) return this.selectedCarousel
 
     this.deselectCarousel(this.selectedCarouselIndex)
 
     this.selectedCarouselIndex = carouselIndex
-    this.selectedCarousel = selectedCarousel
+    this.selectedCarousel = targetCarousel
 
-    this.setCache(carouselIndex, selectedCarousel)
+    this.cacheCarousel(carouselIndex, targetCarousel)
 
     this.selectedCarousel.carousel.element?.setAttribute("data-carousel-selected", "true")
 
@@ -52,8 +52,8 @@ export class NavigationCarouselCollection {
       top: (carouselElement.offsetTop - (carouselElement.getBoundingClientRect().height)),
       behavior: "smooth"
     })
-    
-    return selectedCarousel
+
+    return targetCarousel
   }
 
   deselectCarousel(carouselIndex: number) {
@@ -65,15 +65,21 @@ export class NavigationCarouselCollection {
     return true
   }
 
-  setCache(key: number, value: NavigationCarousel) {
-    if (this.cache.size >= this.options!.cacheSize) {
-      this.deleteCache([...this.cache.keys()][0]!)
+  cacheCarousel(key: number, value: NavigationCarousel) {
+    if (this.cache.has(key)) {
+      this.cache.delete(key)
+    }
+    else if (this.cache.size >= this.options!.maxCacheSize) {
+      const leastRecentlyUsedKey = this.cache.keys().next().value
+      if (leastRecentlyUsedKey === undefined) return undefined
+
+      this.cache.delete(leastRecentlyUsedKey)
     }
 
     this.cache.set(key, value)
   }
 
-  deleteCache(carouselIndex: number) {
+  cachedCarousel(carouselIndex: number) {
     if (!this.cache.has(carouselIndex)) return undefined
     this.cache.delete(carouselIndex)
   }
