@@ -21,6 +21,8 @@ export class NavigationCarousel {
     this.build()
   }
 
+  get hasLinkedComponent() { return (this.carousel.hasLinkedElement) }
+
   build() {
     if (!this.carousel._isValid) { this._isValid = false; return false } else { this._isValid = true }
 
@@ -53,7 +55,7 @@ export class NavigationCarousel {
   getCarouselItems() {
     if (!this._isValid) return undefined
 
-    const items = this.carousel.getCarouselItems()
+    const items = this.carousel.getCarouselItems() || []
     return items.map((item) => new CarouselItem(item as HTMLElement))
   }
 
@@ -97,11 +99,11 @@ export class NavigationCarousel {
       action = "previousPage+previousItem"
 
       nextItem = this.getItemByIndex(nextItem.itemIndex!) /* Ensures that regardless of how many items are scrolled through, it will always select the next one. */
-      nextViewportIndex = nextItem?.viewportIndex || this.carousel.visibleItemsCount
+      nextViewportIndex = nextItem?.viewportIndex || this.carousel.visibleItemsCount!
     }
 
     // Prevents the carousel from interfering with item selection if it returns to the beginning and gets reloaded.
-    if (latestPage === (this.carousel.totalPages - 1) && this.selectedPageIndex === 0) {
+    if (latestPage === (this.carousel.totalPages! - 1) && this.selectedPageIndex === 0) {
       return (
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(async () => {
           const selectItem = await this.selectItem(nextViewportIndex)

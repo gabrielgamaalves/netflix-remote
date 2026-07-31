@@ -99,7 +99,7 @@ export class CarouselItem {
   }
 
   private getFiberFromElement() {
-    if (!this.element) return
+    if (!this._isValid) return
     return new FiberElement(this.element as HTMLElement)
   }
 
@@ -115,16 +115,16 @@ export class CarouselItem {
   }
 
   private get visibleItemsCount() {
-    if (!this.element) return undefined
+    if (!this._isValid) return undefined
 
-    const visibleItemsCount: number = Number(getComputedStyle(this.element).getPropertyValue('--slot-width').slice(-2, -1));
+    const visibleItemsCount: number = Number(getComputedStyle(this.element!).getPropertyValue('--slot-width').slice(-2, -1));
     return visibleItemsCount
   }
 
   get viewportIndex() {
-    if (!this.element || !this.virtualSlot) return undefined
+    if (!this._isValid || !this.virtualSlot) return undefined
 
-    const parent = this.element.parentNode
+    const parent = this.element!.parentNode
     if (!parent) return undefined
 
     const index = this.virtualSlot;
@@ -136,6 +136,8 @@ export class CarouselItem {
   }
 
   get viewportPosition() {
+    if (!this._isValid) return undefined
+    
     const viewportIndex = this.viewportIndex
     if (viewportIndex === undefined) return undefined
 

@@ -24,7 +24,7 @@ export class Carousel {
   constructor(rowIndex: string | number) {
     this.rowIndex = rowIndex
     // this.options = options
-    
+
     this.build()
   }
 
@@ -65,24 +65,33 @@ export class Carousel {
     }
   }
 
-  get totalItems(): number {
+  get totalItems(): number | undefined {
+    if (!this._isValid) return undefined
+
     this.syncIfMounted()
     return Number(this._react?.slider?.props.totalCount)
   }
-  get totalPages(): number {
+  get totalPages(): number | undefined {
+    if (!this._isValid) return undefined
+
     this.syncIfMounted()
     return Number(this._react?.provider?.memoizedProps?.value.pageCount)
   }
 
-  get totalItemsLoaded(): number {
+  get totalItemsLoaded(): number | undefined {
+    if (!this._isValid) return undefined
+
     const slider = ((this._react?.provider?.return?.return?.memoizedProps?.children as ReactNode[])[1] as ReactElement).props?.children[1]
     return slider?.props?.children?.length || 0
   }
   get hasLoadedAllItems() {
+    if (!this._isValid) return undefined
     return this.totalItemsLoaded === this.totalItems
   }
 
-  get selectedPageIndex(): number {
+  get selectedPageIndex(): number | undefined {
+    if (!this._isValid) return undefined
+
     this.syncIfMounted()
 
     const selectedElement = this.element?.querySelector('[data-uia="carousel-page-indicator"] [data-indicator-selected="true"]')
@@ -94,14 +103,16 @@ export class Carousel {
     return Array.from(parent.children).indexOf(selectedElement);
   }
 
-  get visibleItemsCount(): number {
-    this.syncIfMounted()
+  get visibleItemsCount(): number | undefined {
+    if (!this._isValid || !this._scroller) return undefined
 
-    if (!this._scroller) return 0
+    this.syncIfMounted()
     return Number(getComputedStyle(this._scroller).getPropertyValue('--slot-width').slice(-2, -1))
   }
 
   getCarouselItems() {
+    if (!this._isValid) return undefined
+
     this.syncIfMounted()
 
     const items = Array.from(this._scroller?.querySelectorAll("[data-virtual-slot]") || []);
@@ -109,20 +120,26 @@ export class Carousel {
   }
 
   previousPage() {
+    if (!this._isValid) return undefined
+
+    this.syncIfMounted()
     return this._react?.provider?.memoizedProps?.value.previousPage()
   }
   nextPage() {
+    if (!this._isValid) return undefined
+
+    this.syncIfMounted()
     return this._react?.provider?.memoizedProps?.value.nextPage()
   }
 
   async previousPageAsync() {
-    if (!this._scroller) return undefined
+    if (!this._isValid || !this._scroller) return undefined
 
     this.previousPage()
     return await waitForTransitionEnd(this._scroller)
   }
   async nextPageAsync() {
-    if (!this._scroller) return undefined
+    if (!this._isValid || !this._scroller) return undefined
 
     this.nextPage()
     return await waitForTransitionEnd(this._scroller)
