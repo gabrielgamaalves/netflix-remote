@@ -2,19 +2,19 @@
   "name": "netflix-remote",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/netflix-remote.js",
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --minify --sourcemap --outfile=dist/netflix-remote.js --platform=browser --target=es2020 --format=iife --global-name=NetflixRemote",
-    "build:dev": "esbuild src/index.ts --bundle --sourcemap --outfile=dist/netflix-remote.js --platform=browser --target=es2020 --format=iife --global-name=NetflixRemote",
-    "build:w": "esbuild src/index.ts --bundle --sourcemap --outfile=dist/netflix-remote.js --platform=browser --target=es2020 --format=iife --global-name=NetflixRemote --watch"
+    "build": "node esbuild.config.js",
+    "build:dev": "node esbuild.config.js --dev",
+    "build:w": "node esbuild.config.js --watch"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gabrielgamaalves/netflix-remote.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Gabriel Gama",
+  "license": "MIT",
   "type": "module",
   "bugs": {
     "url": "https://github.com/gabrielgamaalves/netflix-remote/issues"
@@ -22,7 +22,6 @@
   "homepage": "https://github.com/gabrielgamaalves/netflix-remote#readme",
   "devDependencies": {
     "@types/node": "^26.1.1",
-    "@types/react-reconciler": "^0.33.0",
     "esbuild": "^0.28.1",
     "typescript": "^7.0.2"
   }
