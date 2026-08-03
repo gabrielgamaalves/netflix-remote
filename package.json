@@ -5,8 +5,8 @@
   "main": "dist/netflix-remote.js",
   "scripts": {
     "build": "node esbuild.config.js",
-    "build:dev": "node esbuild.config.js --dev",
-    "build:w": "node esbuild.config.js --watch"
+    "dev": "node esbuild.config.js --dev",
+    "dev:w": "node esbuild.config.js --watch"
   },
   "repository": {
     "type": "git",

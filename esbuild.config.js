@@ -10,6 +10,8 @@ const args = process.argv.slice(2);
 const isDev = args.includes("--dev");
 const isWatch = args.includes("--watch");
 
+const minify = (!isDev && !isWatch)
+
 /** @type {import("esbuild").BuildOptions} */
 const buildOptions = {
   globalName: "NetflixRemote",
@@ -18,7 +20,7 @@ const buildOptions = {
   outfile: "dist/netflix-remote.js",
 
   bundle: true,
-  minify: (!isDev && !isWatch),
+  minify: minify,
   sourcemap: true,
   
   platform: "browser",
@@ -42,7 +44,7 @@ async function run() {
       console.log(`✅ ${minify ? "production" : "development"} build completed: ${buildOptions.outfile}`);
     }
   } catch (err) {
-    console.error("❌ Erro no build:", err);
+    console.error("❌ Build error:", err);
     process.exit(1);
   }
 }
