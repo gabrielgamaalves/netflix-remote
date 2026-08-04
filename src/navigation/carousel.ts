@@ -83,15 +83,6 @@ export class NavigationCarousel {
     return this.carousel.currentPageIndex
   }
 
-  async nextItem() {
-    if (!this._isMounted) return undefined
-    return await this.selectItem(this.selectedViewportIndex! + 1)
-  }
-  async previousItem() {
-    if (!this._isMounted) return undefined
-    return await this.selectItem(this.selectedViewportIndex! - 1)
-  }
-
   getCarouselItems() {
     if (!this._isMounted) return undefined
 
@@ -108,12 +99,13 @@ export class NavigationCarousel {
     return (this.getCarouselItems() as CarouselItem[]).find(item => item.viewportIndex === viewportIndex)
   }
 
-  private waitForFrame<T = void>(callback?: () => T | Promise<T>): Promise<T> {
-    return new Promise(resolve => {
-      requestAnimationFrame(() => requestAnimationFrame(async () => {
-        resolve(callback ? await callback() : (undefined as T))
-      }))
-    })
+  async nextItem() {
+    if (!this._isMounted) return undefined
+    return await this.selectItem(this.selectedViewportIndex! + 1)
+  }
+  async previousItem() {
+    if (!this._isMounted) return undefined
+    return await this.selectItem(this.selectedViewportIndex! - 1)
   }
 
   async selectItem(viewportIndex: number): Promise<CarouselItem | undefined> {
@@ -168,5 +160,13 @@ export class NavigationCarousel {
   deselectItemByIndex(itemIndex: number) {
     const item = this.getItemByIndex(itemIndex)
     if (item) this.hooks.onItemDeselected!(item)
+  }
+
+  private waitForFrame<T = void>(callback?: () => T | Promise<T>): Promise<T> {
+    return new Promise(resolve => {
+      requestAnimationFrame(() => requestAnimationFrame(async () => {
+        resolve(callback ? await callback() : (undefined as T))
+      }))
+    })
   }
 }
