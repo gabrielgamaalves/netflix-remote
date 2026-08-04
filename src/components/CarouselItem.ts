@@ -94,22 +94,16 @@ export class CarouselItem {
   }
 
   private resolveFiberReferences() {
-    this._fiber = this.createFiberInstance()
-    this._fiberRefs = this.extractFiberRefs()
-  }
+    if (!this._isMounted) return undefined
+    this._fiber = new FiberElement(this.element as HTMLElement)
 
-  private createFiberInstance() {
-    if (!this._isMounted) return
-    return new FiberElement(this.element as HTMLElement)
-  }
-
-  private extractFiberRefs() {
+    /* -> FiberRefs */
     if (!this._fiber) return { wrappedItem: undefined }
 
     const { wrappedItem, itemIndex } = (this._fiber.memoizedProps?.children as ReactElement)?.props || {}
     if (wrappedItem?.props) wrappedItem.props.itemIndex = itemIndex
 
-    return {
+    this._fiberRefs = {
       wrappedItem
     }
   }
@@ -137,7 +131,7 @@ export class CarouselItem {
 
   get viewportPosition() {
     if (!this._isMounted) return undefined
-    
+
     const viewportIndex = this.viewportIndex
     if (viewportIndex === undefined) return undefined
 

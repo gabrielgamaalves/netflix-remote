@@ -8,9 +8,9 @@ export interface BillboardButton {
   leadingIconToken: string | null;
   displayString: string;
   onPress: {
-    trackId ?: number | null;
-    ignoreBookmark ?: boolean;
-    unifiedEntity ?: any;
+    trackId?: number | null;
+    ignoreBookmark?: boolean;
+    unifiedEntity?: any;
   };
 }
 
@@ -207,7 +207,7 @@ export class Billboard {
       return {
         buttonIndex: index,
         element: b,
-        type: b.dataset?.uia?.split("-").filter(f=>f).map(s=> (s[0]?.toLocaleUpperCase() + s.slice(1))).join(""),
+        type: b.dataset?.uia?.split("-").filter(f => f).map(s => (s[0]?.toLocaleUpperCase() + s.slice(1))).join(""),
         displayString: this._fiberRefs?.standardBillboard?.memoizedProps?.buttons?.displayString,
         leadingIconToken: this._fiberRefs?.standardBillboard?.memoizedProps?.buttons?.leadingIconToken,
         onPress: {
@@ -217,7 +217,7 @@ export class Billboard {
         }
       }
     }) || []
-    
+
     return true
   }
 
@@ -232,19 +232,14 @@ export class Billboard {
   }
 
   private resolveFiberReferences() {
-    this._fiber = this.createFiberInstance()
-    this._fiberRefs = this.extractFiberRefs()
-  }
+    if (!this._isMounted) return undefined
 
-  private createFiberInstance() {
-    if (!this._isMounted || !this.element) return
-    return new FiberElement(this.element as HTMLElement)
-  }
+    this._fiber = new FiberElement(this.element as HTMLElement)
 
-  private extractFiberRefs() {
+    /* -> FiberRefs */
     if (!this._fiber) return { standardBillboard: undefined }
-
-    return {
+    
+    this._fiberRefs = {
       standardBillboard: this._fiber?.return?.return
     }
   }

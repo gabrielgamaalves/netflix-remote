@@ -59,20 +59,16 @@ export class Carousel {
   }
 
   private resolveFiberReferences() {
-    this._fiber = this.createFiberInstance()
-    this._fiberRefs = this.extractFiberRefs()
-  }
+    if (!this._isMounted) return undefined
+    this._fiber = new FiberElement(this.element as HTMLElement)
 
-  private createFiberInstance() {
-    if (!this.element) return
-    return new FiberElement(this.element as HTMLElement)
-  }
-
-  private extractFiberRefs() {
+    /* -> FiberRefs */
     if (!this._fiber) return { provider: undefined, slider: undefined }
-    return {
-      provider: this?._fiber?.return?.return,
-      slider: ((this?._fiber?.return?.return?.return?.return?.memoizedProps?.children as ReactNode[])[1] as ReactElement).props?.children[1]
+
+    const provider = this?._fiber?.return?.return
+    this._fiberRefs  = {
+      provider: provider,
+      slider: ((provider?.return?.return?.memoizedProps?.children as ReactNode[])[1] as ReactElement).props?.children[1]
     }
   }
 
