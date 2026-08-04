@@ -2,12 +2,12 @@ import { NavigationCarousel, type ItemSelectionHooks } from "./carousel.js";
 
 export type CacheOptions = { maxCacheSize: number }
 
-export type CarouselSelectionHooks = {
+export type CarouselCollectionSelectionHooks = {
   onCarouselSelected?: (carousel: NavigationCarousel) => void
   onCarouselDeselected?: (carousel: NavigationCarousel) => void
 }
 
-export const defaultHooks: Required<CarouselSelectionHooks> = {
+export const defaultCarouselCollectionHooks: Required<CarouselCollectionSelectionHooks> = {
   onCarouselSelected: (navCarousel) => {
     const element = navCarousel.carousel.element!
     element.setAttribute("data-carousel-selected", "true")
@@ -25,7 +25,7 @@ export const defaultHooks: Required<CarouselSelectionHooks> = {
 export class NavigationCarouselCollection {
   options: CacheOptions | undefined
 
-  hooks: Required<CarouselSelectionHooks>
+  hooks: Required<CarouselCollectionSelectionHooks>
   itemHooks?: ItemSelectionHooks
 
   cache: Map<number, NavigationCarousel>
@@ -33,14 +33,14 @@ export class NavigationCarouselCollection {
   selectedCarouselIndex: number = 0
   selectedCarousel?: NavigationCarousel
 
-  constructor(startCarousel: number, options?: CacheOptions & CarouselSelectionHooks & ItemSelectionHooks) {
+  constructor(startCarousel: number, options?: CacheOptions & CarouselCollectionSelectionHooks & ItemSelectionHooks) {
     this.options = {
       maxCacheSize: Math.max(options?.maxCacheSize ?? 3, 3)
     }
 
     this.hooks = {
-      onCarouselSelected: options?.onCarouselSelected ?? defaultHooks.onCarouselSelected,
-      onCarouselDeselected: options?.onCarouselDeselected ?? defaultHooks.onCarouselDeselected,
+      onCarouselSelected: options?.onCarouselSelected ?? defaultCarouselCollectionHooks.onCarouselSelected,
+      onCarouselDeselected: options?.onCarouselDeselected ?? defaultCarouselCollectionHooks.onCarouselDeselected,
     }
 
     this.itemHooks = {
