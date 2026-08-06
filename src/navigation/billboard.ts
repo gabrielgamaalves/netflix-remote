@@ -1,11 +1,16 @@
 import { Billboard, type BillboardButton } from "@components/Billboard.js";
+import { NavigationSelector } from "@shared/NavigationSelector.js";
 
-export type BillboardSelectionHooks = {
+export type OptionsNavigationBillboard = {
+  hooks?: ButtonsSelectionHooks
+}
+
+export type ButtonsSelectionHooks = {
   onButtonSelected?: (billboardButton: BillboardButton) => void
   onButtonDeselected?: (billboardButton: BillboardButton) => void
 }
 
-export const defaultBillboardHooks: Required<BillboardSelectionHooks> = {
+export const defaultHooks: Required<ButtonsSelectionHooks> = {
   onButtonSelected: (billboardButton) => {
     billboardButton.element?.setAttribute("data-button-target", "true")
   },
@@ -14,28 +19,23 @@ export const defaultBillboardHooks: Required<BillboardSelectionHooks> = {
   }
 }
 
-export class NavigationBillboard {
+export class NavigationBillboard extends NavigationSelector<BillboardButton, ButtonsSelectionHooks> {
   billboard: Billboard
-  hooks: Required<BillboardSelectionHooks>
 
   selectedButton?: BillboardButton
   selectedButtonIndex?: number
 
   _isMounted: boolean = false
 
-  constructor(options?: BillboardSelectionHooks) {
+  constructor(options?: OptionsNavigationBillboard) {
+    super(defaultHooks, options)
     this.billboard = new Billboard()
-
-    this.hooks = {
-      onButtonSelected: options?.onButtonSelected ?? defaultBillboardHooks.onButtonSelected,
-      onButtonDeselected: options?.onButtonDeselected ?? defaultBillboardHooks.onButtonDeselected
-    }
 
     this.mount()
   }
 
   mount() {
-    if (!this.billboard._isMounted) { this._isMounted = false; return false } else { this._isMounted = true }
+    this.mountComponent(this.billboard)
 
     this.selectedButtonIndex = 0
     this.selectButton(0)

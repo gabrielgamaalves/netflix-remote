@@ -1,14 +1,20 @@
+import { NavigationSelector, type SelectionHooks } from "@shared/NavigationSelector.js";
+
 import { Carousel } from "@components/Carousel.js";
 import { CarouselItem } from "@components/CarouselItem.js";
+
+export type OptionsNavigationCarousel = {
+  hooks?: ItemSelectionHooks
+}
 
 export type LatestAction = "initialized" | "nextItem" | "previousItem" | "nextPageAndItem" | "previousPageAndItem"
 
 export type ItemSelectionHooks = {
-  onItemSelected?: ((item: CarouselItem) => void) | undefined
-  onItemDeselected?: ((item: CarouselItem) => void) | undefined
+  onItemSelected?: (item: CarouselItem) => void
+  onItemDeselected?: (item: CarouselItem) => void
 }
 
-export const defaultItemHooks: Required<ItemSelectionHooks> = {
+export const defaultHooks: Required<ItemSelectionHooks> = {
   onItemSelected: (item) => {
     item.element?.setAttribute("data-card-selected", "true")
   },
@@ -17,10 +23,8 @@ export const defaultItemHooks: Required<ItemSelectionHooks> = {
   }
 }
 
-export class NavigationCarousel {
+export class NavigationCarousel extends NavigationSelector<CarouselItem, ItemSelectionHooks> {
   carousel: Carousel
-  hooks: Required<ItemSelectionHooks>
-
   id?: string
 
   latestAction?: LatestAction
@@ -32,20 +36,16 @@ export class NavigationCarousel {
 
   _isMounted: boolean = false
 
-  constructor(rowIndex: string | number, options?: ItemSelectionHooks) {
-    this.carousel = new Carousel(rowIndex) /* principio da hierarqui */
-    this.hooks = {
-      onItemSelected: options?.onItemSelected ?? defaultItemHooks.onItemSelected,
-      onItemDeselected: options?.onItemDeselected ?? defaultItemHooks.onItemDeselected,
-    }
+  constructor(rowIndex: string | number, options?: OptionsNavigationCarousel) {
+    super(defaultHooks, options)
 
+    this.carousel = new Carousel(rowIndex)
     this.mount()
   }
 
-  get hasLinkedElement() { return (this.carousel.hasLinkedElement) }
-
   mount() {
-    if (!this.carousel._isMounted) { this._isMounted = false; return false } else { this._isMounted = true }
+    const mounted = this.mountComponent(this.carousel)
+    if (!mounted) return false
 
     this.latestAction = "initialized"
 
@@ -152,14 +152,13 @@ export class NavigationCarousel {
     this.selectedItem = targetItem
 
     this.selectedItemIndex = this.selectedItem?.itemIndex as number
-    if (this.selectedItem) this.hooks.onItemSelected!(this.selectedItem)
-
+    if (this.selectedItem) this.hooks.onItemSelected(this.selectedItem)
     return this.selectedItem
   }
 
   deselectItemByIndex(itemIndex: number) {
     const item = this.getItemByIndex(itemIndex)
-    if (item) this.hooks.onItemDeselected!(item)
+    if (item) this.hooks.onItemDeselected(item)
   }
 
   private waitForFrame<T = void>(callback?: () => T | Promise<T>): Promise<T> {

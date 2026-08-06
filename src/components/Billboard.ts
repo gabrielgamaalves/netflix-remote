@@ -89,7 +89,7 @@ export class Billboard {
     this.mount()
   }
 
-  get hasLinkedElement() { return this?.element?.isConnected }
+  get hasLinkedElement(): boolean { return !!(this?.element?.isConnected) }
   refreshIfNeeded() { if (!this.hasLinkedElement) this.mount() }
 
   mount() {

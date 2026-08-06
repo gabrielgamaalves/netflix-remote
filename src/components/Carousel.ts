@@ -33,7 +33,7 @@ export class Carousel {
     this.mount()
   }
 
-  get hasLinkedElement() { return this?.element?.isConnected && !!((this._fiber?.ref as any)?.current) }
+  get hasLinkedElement(): boolean { return !!(this?.element?.isConnected) && !!((this._fiber?.ref as any)?.current) }
   refreshIfNeeded() { if (!this.hasLinkedElement) this.mount() }
 
   mount() {
