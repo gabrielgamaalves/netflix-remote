@@ -8,8 +8,9 @@
     "paths": {
       "@components/*": ["./src/components/*"],
       "@navigation/*": ["./src/navigation/*"],
-      "@navigator": ["./src/navigator/*"],
+      "@navigator/*": ["./src/navigator/*"],
       "@events/*": ["./src/events/*"],
+      "@shared/*": ["./src/shared/*"],
       "@utils/*": ["./src/utils/*"],
       "@lib/*": ["./src/lib/*"],
     },
