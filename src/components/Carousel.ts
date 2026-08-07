@@ -3,10 +3,7 @@ import waitForTransitionEnd from "@utils/waitForTransitionEnd.js";
 import { CarouselItem } from "./CarouselItem.js";
 
 export class Carousel {
-  readonly rowIndex: string | number
-  // readonly options?: {
-  //   force_link_fiberRefs?: boolean
-  // }
+  readonly rowIndex:  number
 
   element?: HTMLElement
   id?: string
@@ -27,9 +24,8 @@ export class Carousel {
   _isMounted: boolean = false
 
   constructor(rowIndex: string | number) {
-    this.rowIndex = rowIndex
-    // this.options = options
-
+    this.rowIndex = Number(rowIndex)
+    
     this.mount()
   }
 
@@ -88,11 +84,15 @@ export class Carousel {
   get totalItemsLoaded(): number | undefined {
     if (!this._isMounted) return undefined
 
+    this.refreshIfNeeded()
+
     const slider = ((this._fiberRefs?.provider?.return?.return?.memoizedProps?.children as ReactNode[])[1] as ReactElement).props?.children[1]
     return slider?.props?.children?.length || 0
   }
   get allItemsLoaded() {
     if (!this._isMounted) return undefined
+    
+    this.refreshIfNeeded()
     return this.totalItemsLoaded === this.totalItems
   }
 
