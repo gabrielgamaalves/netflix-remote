@@ -1,45 +1,46 @@
 import { NavigationSelector } from "@shared/NavigationSelector.js";
 import { NavigationCarousel, type ItemSelectionHooks } from "./carousel.js";
 
-export type CarouselSelectionHooks<T = NavigationCarousel> = {
-  onCarouselSelected?: (carousel: T) => void
-  onCarouselDeselected?: (carousel: T) => void
-}
-
 export type OptionsNavigationCarouselCollection = {
-  maxCacheSize: number,
-  hooks: CarouselSelectionHooks
+  maxCacheSize?: number,
+  hooks?: CarouselSelectionHooks
   itemsHooks?: ItemSelectionHooks
 }
 
-export const defaultHooks: Required<CarouselSelectionHooks> = {
-  onCarouselSelected: (navCarousel) => {
-    const element = navCarousel.carousel.element!
-    element.setAttribute("data-carousel-selected", "true")
+export type LatestAction = "initialized" | "nextCarousel" | "previousCarousel"
 
-    window.scrollTo({
-      top: (element.offsetTop - element.getBoundingClientRect().height),
-      behavior: "smooth"
-    })
-  },
-  onCarouselDeselected: (navCarousel) => {
-    navCarousel.carousel.element?.removeAttribute("data-carousel-selected")
-  },
+export type CarouselSelectionHooks<T = NavigationCarousel, C = NavigationCarouselCollection> = { /* (issues) -> carouselCollection existe sim! */
+  onCarouselSelected?: (carousel: T, carouselCollection?: C) => void
+  onCarouselDeselected?: (carousel: T, carouselCollection?: C) => void
 }
 
-export class NavigationCarouselCollection extends NavigationSelector<NavigationCarousel, CarouselSelectionHooks>{
+export const CAROUSEL_SELECTED_DATASET = "data-carousel-selected"
+
+export const defaultHooks: Required<CarouselSelectionHooks> = {
+  onCarouselSelected: () => { },
+  onCarouselDeselected: () => { },
+}
+
+export class NavigationCarouselCollection extends NavigationSelector<NavigationCarousel, CarouselSelectionHooks> {
+  private readonly startCarousel: number
+
   readonly maxCacheSize: number
   itemHooks: ItemSelectionHooks
+
+  latestAction: LatestAction = "initialized"
 
   cache: Map<number, NavigationCarousel>
 
   selectedCarouselIndex: number = 0
   selectedCarousel?: NavigationCarousel
 
+
   _isMounted: boolean = true
 
   constructor(startCarousel: number, options?: OptionsNavigationCarouselCollection) {
     super(defaultHooks, options)
+
+    this.startCarousel = startCarousel;
 
     this.maxCacheSize = Math.max(options?.maxCacheSize ?? 3, 3)
     this.itemHooks = options?.itemsHooks || {}
@@ -64,14 +65,24 @@ export class NavigationCarouselCollection extends NavigationSelector<NavigationC
 
     if (!targetCarousel._isMounted) return this.selectedCarousel
 
+    let action: LatestAction = (carouselIndex > (this.selectedCarouselIndex!)) ? "nextCarousel" : "previousCarousel"
+
     this.deselectCarouselByIndex(this.selectedCarouselIndex)
 
     this.selectedCarouselIndex = carouselIndex
     this.selectedCarousel = targetCarousel
+    this.element = targetCarousel.element!
 
     this.cacheCarousel(carouselIndex, targetCarousel)
 
-    this.hooks.onCarouselSelected(this.selectedCarousel)
+    this.latestAction = (
+      action === "nextCarousel"
+      && this.latestAction === "initialized"
+      && (carouselIndex === this.startCarousel)
+    ) ? "initialized" : action
+
+    this.selectedCarousel?.carousel?.element?.setAttribute(CAROUSEL_SELECTED_DATASET, "true")
+    this.hooks.onCarouselSelected(this.selectedCarousel, this)
 
     return targetCarousel
   }
@@ -80,7 +91,9 @@ export class NavigationCarouselCollection extends NavigationSelector<NavigationC
     if (!this.cache.has(carouselIndex)) return false
 
     const cachedCarousel = this.cache.get(carouselIndex)
-    if (cachedCarousel) this.hooks.onCarouselDeselected(cachedCarousel)
+
+    cachedCarousel?.carousel?.element?.removeAttribute(CAROUSEL_SELECTED_DATASET)
+    if (cachedCarousel) this.hooks.onCarouselDeselected(cachedCarousel, this)
 
     return true
   }

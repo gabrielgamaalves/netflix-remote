@@ -14,20 +14,22 @@ export type ItemSelectionHooks = {
   onItemDeselected?: (item: CarouselItem) => void
 }
 
+export const ITEM_SELECTED_DATASET = "data-item-selected"
+
 export const defaultHooks: Required<ItemSelectionHooks> = {
-  onItemSelected: (item) => {
-    item.element?.setAttribute("data-card-selected", "true")
-  },
+  onItemSelected: (item) => { },
   onItemDeselected: (item) => {
-    item.element?.removeAttribute("data-card-selected")
   }
 }
 
+
 export class NavigationCarousel extends NavigationSelector<CarouselItem, ItemSelectionHooks> {
+  rowIndex: number
+
   carousel: Carousel
   id?: string
 
-  latestAction?: LatestAction
+  latestAction: LatestAction = "initialized"
 
   selectedItemIndex?: number
   selectedViewportIndex?: number
@@ -36,18 +38,18 @@ export class NavigationCarousel extends NavigationSelector<CarouselItem, ItemSel
 
   _isMounted: boolean = false
 
-  constructor(rowIndex: string | number, options?: OptionsNavigationCarousel) {
+  constructor(rowIndex: number, options?: OptionsNavigationCarousel) {
     super(defaultHooks, options)
 
     this.carousel = new Carousel(rowIndex)
+    this.rowIndex = rowIndex
+
     this.mount()
   }
 
   mount() {
     const mounted = this.mountComponent(this.carousel)
     if (!mounted) return false
-
-    this.latestAction = "initialized"
 
     this.id = this.carousel.element!.id
     this.selectedItemIndex = 0
@@ -61,7 +63,7 @@ export class NavigationCarousel extends NavigationSelector<CarouselItem, ItemSel
   }
 
   private findViewportBySelectedCard(): number {
-    const selectedCardElement = this.carousel.element!.querySelector("[data-card-selected]") /* vai ter */
+    const selectedCardElement = this.carousel.element!.querySelector(`[${ITEM_SELECTED_DATASET}]`) /* vai ter */
 
     if (!selectedCardElement) return -1
 
@@ -116,9 +118,9 @@ export class NavigationCarousel extends NavigationSelector<CarouselItem, ItemSel
     let targetItem = this.getItemByViewportIndex(viewportIndex)
     let targetViewportIndex = viewportIndex
 
-    let action: LatestAction = (viewportIndex === this.selectedViewportIndex) ? "initialized" : ((viewportIndex > (this.selectedViewportIndex!)) ? "nextItem" : "previousItem")
+    let action: LatestAction = (viewportIndex > (this.selectedViewportIndex!)) ? "nextItem" : "previousItem"
 
-    this.deselectItemByIndex(this.selectedItemIndex!) /* or viewportIndex */
+    if (this.latestAction !== "initialized") this.deselectItemByIndex(this.selectedItemIndex!) /* or viewportIndex */
 
     if (targetItem?.viewportPosition === "leftPeek" && this.currentPageIndex === 0 && !this.carousel.allItemsLoaded) {
       return this.selectItem(targetViewportIndex + 1) /* Due to slowness when loading items, it hinders the item selection process. */
@@ -152,12 +154,17 @@ export class NavigationCarousel extends NavigationSelector<CarouselItem, ItemSel
     this.selectedItem = targetItem
 
     this.selectedItemIndex = this.selectedItem?.itemIndex as number
+
+    this.selectedItem?.element?.setAttribute(ITEM_SELECTED_DATASET, "true")
     if (this.selectedItem) this.hooks.onItemSelected(this.selectedItem)
+
     return this.selectedItem
   }
 
   deselectItemByIndex(itemIndex: number) {
     const item = this.getItemByIndex(itemIndex)
+
+    item?.element?.removeAttribute(ITEM_SELECTED_DATASET)
     if (item) this.hooks.onItemDeselected(item)
   }
 

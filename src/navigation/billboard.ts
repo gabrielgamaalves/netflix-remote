@@ -10,13 +10,11 @@ export type ButtonsSelectionHooks = {
   onButtonDeselected?: (billboardButton: BillboardButton) => void
 }
 
+const BUTTON_SELECTED_DATASET = "data-button-selected"
+
 export const defaultHooks: Required<ButtonsSelectionHooks> = {
-  onButtonSelected: (billboardButton) => {
-    billboardButton.element?.setAttribute("data-button-target", "true")
-  },
-  onButtonDeselected: (billboardButton) => {
-    billboardButton.element?.removeAttribute("data-button-target")
-  }
+  onButtonSelected: (billboardButton) => { },
+  onButtonDeselected: (billboardButton) => { }
 }
 
 export class NavigationBillboard extends NavigationSelector<BillboardButton, ButtonsSelectionHooks> {
@@ -64,15 +62,18 @@ export class NavigationBillboard extends NavigationSelector<BillboardButton, But
 
   selectButton(buttonIndex: number) {
     if (!this._isMounted) return undefined
+    this.billboard.refreshIfNeeded()
 
     const targetButton = this.getButtonByIndex(buttonIndex)
     if (!targetButton) return undefined
 
+    this.selectedButton?.element?.removeAttribute(BUTTON_SELECTED_DATASET)
     this.deselectButton(this.selectedButtonIndex!)
-
+    
     this.selectedButtonIndex = buttonIndex
     this.selectedButton = targetButton
 
+    targetButton?.element?.setAttribute(BUTTON_SELECTED_DATASET, "true")
     this.hooks.onButtonSelected(targetButton)
 
     return targetButton
