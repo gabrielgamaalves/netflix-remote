@@ -13,7 +13,7 @@ export interface MountableComponent {
 }
 
 // M -> item item que é manipulado, H -> Hooks
-export abstract class NavigationSelector<M, H = SelectionHooks<M>> {
+export abstract class NavigationSelector<M = any, H = SelectionHooks<M>> {
   element?: HTMLElement
   hooks: Required<H>
   _isMounted: boolean = false
