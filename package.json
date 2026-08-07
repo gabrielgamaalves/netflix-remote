@@ -23,6 +23,7 @@
   "devDependencies": {
     "@types/node": "^26.1.1",
     "esbuild": "^0.28.1",
+    "peerjs": "^1.5.5",
     "typescript": "^7.0.2"
   }
 }
